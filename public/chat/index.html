@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FlashChat — Flash Custom Apparel &amp; Signs</title>
+<meta name="description" content="Chat with Flash Custom Apparel &amp; Signs — ask about pricing, turnaround, or get a quote in seconds.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#121208; --bg-raised:#1D1C11;
+    --text:#F5F4EA; --text-soft:#B7B597;
+    --line:#332F1C;
+    --flash:#D9E021; --flash-ink:#15150D; --flash-deep:#E7EE5C;
+    --font-display:'Teko','Arial Narrow',sans-serif;
+    --font-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,'SF Mono',monospace;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#F5F4EA; --bg-raised:#EBE9D8;
+      --text:#15150D; --text-soft:#54553E;
+      --line:#DBD8C2; --flash-deep:#8C9300;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F4EA; --bg-raised:#EBE9D8;
+    --text:#15150D; --text-soft:#54553E;
+    --line:#DBD8C2; --flash-deep:#8C9300;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body);
+    display:flex; flex-direction:column; overscroll-behavior:none;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  button{font:inherit;}
+  a{color:inherit;}
+
+  .top{
+    flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px 16px; border-bottom:1px solid var(--line); background:var(--bg-raised);
+  }
+  .top-brand{ display:flex; align-items:center; gap:14px; min-width:0; }
+  .top-back{
+    flex:none; display:flex; align-items:center; justify-content:center; width:32px; height:32px;
+    color:var(--text-soft); text-decoration:none; border:1px solid var(--line);
+  }
+  .top-back:hover{ color:var(--text); border-color:var(--text-soft); }
+  .top-id{ min-width:0; }
+  .top-title-row{ display:flex; align-items:center; gap:6px; }
+  .top-title{ font-family:var(--font-display); font-size:24px; text-transform:uppercase; letter-spacing:.01em; line-height:1; white-space:nowrap; }
+  .top-bolt{ flex:none; width:16px; height:16px; fill:var(--flash); }
+  .top-sub{ margin-top:2px; font-size:11px; font-family:var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--flash-deep); display:flex; align-items:center; gap:6px; }
+  .pulse{ flex:none; width:6px; height:6px; border-radius:50%; background:var(--flash-deep); animation:pulse-beat 1.8s ease-in-out infinite; }
+  @keyframes pulse-beat{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.45; transform:scale(.72); } }
+  @media (prefers-reduced-motion: reduce){ .pulse{ animation:none; } }
+
+  .lang-toggle{ flex:none; display:flex; border:1px solid var(--line); }
+  .lang-btn{ background:transparent; border:none; color:var(--text-soft); font-family:var(--font-mono); font-size:11px; letter-spacing:.04em; padding:7px 10px; cursor:pointer; }
+  .lang-btn.is-active{ background:var(--flash); color:var(--flash-ink); }
+
+  .body{ flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; -webkit-overflow-scrolling:touch; }
+  .msg{ max-width:86%; font-size:14px; line-height:1.5; padding:10px 13px; border-radius:2px; }
+  .msg.from-bot{ align-self:flex-start; background:var(--bg-raised); border:1px solid var(--line); }
+  .msg.from-user{ align-self:flex-end; background:var(--flash); color:var(--flash-ink); }
+  .msg.is-thinking{ opacity:.6; font-style:italic; }
+  .msg.is-error{ background:transparent; border:1px dashed var(--line); color:var(--text-soft); }
+  .msg.is-system{ align-self:center; background:transparent; border:none; color:var(--text-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; padding:2px 8px; text-align:center; }
+  .msg.is-human{ border-color:var(--flash-deep); }
+
+  .attach-note{ flex:none; display:flex; align-items:center; gap:6px; margin:0 16px 8px; padding:7px 11px; background:var(--bg-raised); border:1px solid var(--flash-deep); font-size:12px; color:var(--text-soft); }
+  .attach-note[hidden]{ display:none; }
+  .attach-note .dot{ flex:none; width:6px; height:6px; border-radius:50%; background:var(--flash-deep); }
+  .attach-note .x{ margin-left:auto; background:transparent; border:none; color:var(--text-soft); cursor:pointer; font-size:15px; line-height:1; padding:2px; }
+
+  .quote-row{ flex:none; padding:0 16px 10px; }
+  .quote-shortcut{ width:100%; background:transparent; border:1px solid var(--flash-deep); color:var(--flash-deep); font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; text-transform:uppercase; padding:9px 10px; cursor:pointer; }
+  .quote-shortcut:hover{ background:var(--flash-deep); color:var(--bg); }
+  .quote-shortcut:disabled{ opacity:.5; cursor:default; }
+
+  .form{ flex:none; display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--line); background:var(--bg-raised); }
+  .attach-btn{ flex:none; width:42px; height:42px; display:flex; align-items:center; justify-content:center; background:transparent; color:var(--text-soft); border:1px solid var(--line); cursor:pointer; }
+  .attach-btn:hover{ color:var(--text); border-color:var(--text-soft); }
+  .attach-btn.has-file{ color:var(--flash-deep); border-color:var(--flash-deep); }
+  .field{ flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); color:var(--text); padding:10px 12px; font-family:var(--font-body); font-size:15px; }
+  .field:focus{ outline:none; border-color:var(--flash-deep); }
+  .send-btn{ flex:none; width:42px; height:42px; display:flex; align-items:center; justify-content:center; background:var(--flash); color:var(--flash-ink); border:none; cursor:pointer; }
+  .send-btn:hover{ opacity:.9; }
+  .send-btn:disabled{ opacity:.4; cursor:default; }
+
+  .human-bar{ flex:none; display:flex; gap:10px; padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px)); border-top:1px solid var(--line); background:var(--bg); }
+  .human-link{ flex:1; min-width:0; display:flex; align-items:center; justify-content:center; gap:6px; text-decoration:none; color:var(--text-soft); font-family:var(--font-mono); font-size:11.5px; letter-spacing:.02em; padding:8px 4px; border:1px solid var(--line); }
+  .human-link:hover{ color:var(--text); border-color:var(--text-soft); }
+  .human-link svg{ flex:none; }
+
+  @media (max-height:480px){
+    .body{ padding:10px 14px; gap:6px; }
+    .top{ padding:8px 14px; }
+    .quote-row{ display:none; }
+    .form{ padding:8px 12px; }
+    .attach-btn, .send-btn{ width:36px; height:36px; }
+    .human-bar{ padding:6px 12px calc(6px + env(safe-area-inset-bottom,0px)); }
+    .human-link{ padding:5px; font-size:10.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-brand">
+    <a class="top-back" href="/" aria-label="Back to flashcustomprint.com">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </a>
+    <div class="top-id">
+      <div class="top-title-row">
+        <div class="top-title">FlashChat</div>
+        <svg class="top-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h7l-1.5 8L21 10h-7l-1-8z"/></svg>
+      </div>
+      <div class="top-sub"><span class="pulse"></span><span data-i18n="subtitle">Answers 24/7</span></div>
+    </div>
+  </div>
+  <div class="lang-toggle" role="group" aria-label="Language">
+    <button type="button" class="lang-btn is-active" id="langBtnEn" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" class="lang-btn" id="langBtnEs" data-lang="es" aria-pressed="false">ES</button>
+  </div>
+</div>
+
+<div class="body" id="chatBody"></div>
+<div class="attach-note" id="attachNote" hidden></div>
+<div class="quote-row">
+  <button type="button" class="quote-shortcut" id="quoteShortcutBtn" data-i18n="requestQuote">Request a Quote</button>
+</div>
+<form class="form" id="chatForm">
+  <button type="button" class="attach-btn" id="attachBtn" aria-label="Attach a photo or logo">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05 12.25 20.24a5.5 5.5 0 0 1-7.78-7.78l9.19-9.19a3.67 3.67 0 1 1 5.19 5.19l-9.2 9.19a1.83 1.83 0 0 1-2.59-2.59l8.49-8.48"></path></svg>
+  </button>
+  <input type="file" id="attachInput" accept="image/*,.pdf" hidden>
+  <input type="text" id="chatInput" class="field" data-i18n-placeholder="placeholder" placeholder="Type a question…" autocomplete="off">
+  <button type="submit" class="send-btn" id="sendBtn" aria-label="Send">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+  </button>
+</form>
+<div class="human-bar">
+  <a class="human-link" id="humanCallLink" href="tel:+15555550100">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+    <span>(555) 555-0100</span>
+  </a>
+  <a class="human-link" id="humanEmailLink" href="mailto:hello@example.com">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="m22 6-10 7L2 6"></path></svg>
+    <span data-i18n="emailUs">Email us</span>
+  </a>
+</div>
+
+<script>
+(function(){
+  var I18N = {
+    en: {
+      subtitle: 'Answers 24/7',
+      requestQuote: 'Request a Quote',
+      requestQuoteMessage: 'I’d like to request a quote.',
+      placeholder: 'Type a question…',
+      emailUs: 'Email us',
+      greeting: 'Hi, I\'m FlashChat! Ask me about our apparel or sign printing, pricing tiers, or how ordering works — I\'ll point you to a quote if you\'re ready.',
+      thinking: 'Thinking…',
+      errorGeneric: 'Something went wrong on my end — try asking again, or call/email us directly below.',
+      errorUnavailable: 'Chat isn\'t available right now — please call/text/email us directly below.',
+      errorBusy: 'I\'m getting a lot of questions right now — give it a moment and try again.',
+      humanJoined: 'A Flash team member has joined the chat.',
+      attachedMessage: 'Here\'s a photo/logo.',
+      attachTooBig: 'That file is too big — please attach something under 8MB.',
+      attachReady: 'Attached: {name} — send a message to include it'
+    },
+    es: {
+      subtitle: 'Responde 24/7',
+      requestQuote: 'Solicitar Cotización',
+      requestQuoteMessage: 'Me gustaría solicitar una cotización.',
+      placeholder: 'Escribe una pregunta…',
+      emailUs: 'Escríbenos',
+      greeting: '¡Hola, soy FlashChat! Pregunta sobre nuestra ropa o letreros, precios por nivel, o cómo funciona un pedido — te ayudo a llegar a una cotización si ya estás listo.',
+      thinking: 'Pensando…',
+      errorGeneric: 'Algo salió mal de mi lado — intenta de nuevo, o llámanos/escríbenos directamente abajo.',
+      errorUnavailable: 'El chat no está disponible en este momento — llámanos, escríbenos o mándanos un correo directamente abajo.',
+      errorBusy: 'Estoy recibiendo muchas preguntas ahora mismo — espera un momento e intenta de nuevo.',
+      humanJoined: 'Un miembro del equipo de Flash se ha unido al chat.',
+      attachedMessage: 'Aquí tienes una foto/logo.',
+      attachTooBig: 'Ese archivo es muy grande — por favor adjunta algo menor a 8MB.',
+      attachReady: 'Adjuntado: {name} — envía un mensaje para incluirlo'
+    }
+  };
+
+  var currentLang = 'en';
+  try{
+    var saved = localStorage.getItem('flashLang');
+    if(saved === 'es' || saved === 'en') currentLang = saved;
+    else {
+      var nav = (navigator.language || '').toLowerCase();
+      if(nav.indexOf('es') === 0) currentLang = 'es';
+    }
+  }catch(e){}
+
+  function dictVal(key){
+    return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en && I18N.en[key]) || '';
+  }
+
+  function applyLanguage(lang){
+    if(!I18N[lang]) lang = 'en';
+    currentLang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(function(el){
+      var key = el.getAttribute('data-i18n');
+      if(Object.prototype.hasOwnProperty.call(I18N[lang], key)){ el.textContent = I18N[lang][key]; }
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){
+      var key = el.getAttribute('data-i18n-placeholder');
+      if(Object.prototype.hasOwnProperty.call(I18N[lang], key)){ el.placeholder = I18N[lang][key]; }
+    });
+    document.documentElement.setAttribute('lang', lang);
+    var enBtn = document.getElementById('langBtnEn');
+    var esBtn = document.getElementById('langBtnEs');
+    if(enBtn){ enBtn.classList.toggle('is-active', lang === 'en'); enBtn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false'); }
+    if(esBtn){ esBtn.classList.toggle('is-active', lang === 'es'); esBtn.setAttribute('aria-pressed', lang === 'es' ? 'true' : 'false'); }
+    try{ localStorage.setItem('flashLang', lang); }catch(e){}
+  }
+
+  document.getElementById('langBtnEn').addEventListener('click', function(){ applyLanguage('en'); });
+  document.getElementById('langBtnEs').addEventListener('click', function(){ applyLanguage('es'); });
+  applyLanguage(currentLang);
+
+  // ---- shared visitor session id (same key as the embedded widget, so the
+  // dashboard's "who's on site" and any human takeover carry over cleanly
+  // whether the visitor arrived via the homepage widget or this page) ----
+  var SESSION_KEY = 'flash-visitor-session';
+  function getSessionId(){
+    try{
+      var id = sessionStorage.getItem(SESSION_KEY);
+      if(!id){
+        id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2));
+        sessionStorage.setItem(SESSION_KEY, id);
+      }
+      return id;
+    } catch(e){
+      if(!window.__flashSessionIdFallback){
+        window.__flashSessionIdFallback = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random());
+      }
+      return window.__flashSessionIdFallback;
+    }
+  }
+
+  function ping(){
+    var utmSource = '';
+    try{ utmSource = new URLSearchParams(window.location.search).get('utm_source') || ''; }catch(e){}
+    fetch('/api/presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: getSessionId(),
+        page: 'chat/standalone',
+        referrer: (document.referrer || '').slice(0, 300),
+        utmSource: utmSource.slice(0, 60)
+      })
+    }).catch(function(){});
+  }
+  ping();
+  setInterval(ping, 20000);
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible'){ ping(); }
+  });
+
+  // ---- chat ----
+  var body = document.getElementById('chatBody');
+  var form = document.getElementById('chatForm');
+  var input = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('sendBtn');
+  var quoteShortcutBtn = document.getElementById('quoteShortcutBtn');
+  var attachBtn = document.getElementById('attachBtn');
+  var attachInput = document.getElementById('attachInput');
+  var attachNote = document.getElementById('attachNote');
+
+  var busy = false;
+  var greeted = false;
+  var lastMsgCount = 0;
+  var humanMode = false;
+  var hasChatted = false;
+  var pollTimer = null;
+  var pendingAttachment = null;
+  var MAX_ATTACH_BYTES = 8 * 1024 * 1024;
+
+  function scrollToBottom(){ body.scrollTop = body.scrollHeight; }
+
+  function addMsg(text, cls){
+    var div = document.createElement('div');
+    div.className = 'msg ' + cls;
+    div.textContent = text;
+    body.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function ensureGreeting(){
+    if(greeted) return;
+    greeted = true;
+    addMsg(dictVal('greeting'), 'from-bot');
+  }
+  ensureGreeting();
+
+  function stopPolling(){
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+  }
+  function setPollInterval(ms){
+    stopPolling();
+    pollTimer = setInterval(pollMessages, ms);
+  }
+
+  function pollMessages(){
+    var sid = getSessionId();
+    if(!sid) return;
+    fetch('/api/chat/' + encodeURIComponent(sid))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if(!data || !data.messages) return;
+        if(!humanMode && data.mode === 'human'){
+          humanMode = true;
+          addMsg(dictVal('humanJoined'), 'from-bot is-system');
+        }
+        if(data.messages.length > lastMsgCount){
+          var newOnes = data.messages.slice(lastMsgCount);
+          newOnes.forEach(function(m){
+            if(m.role === 'visitor') return;
+            addMsg(m.text, m.role === 'agent' ? 'from-bot is-human' : 'from-bot');
+          });
+          lastMsgCount = data.messages.length;
+        }
+      })
+      .catch(function(){});
+  }
+  // Pick up an in-progress conversation (e.g. the visitor already chatted on
+  // the homepage widget earlier in this browser session).
+  pollMessages();
+  setPollInterval(15000);
+
+  function errorCopy(code){
+    if(code === 'not_declared') return dictVal('errorUnavailable');
+    if(code === 'rate_limited') return dictVal('errorBusy');
+    return dictVal('errorGeneric');
+  }
+
+  function callChat(message, isShortcut, attachment){
+    var payload = {
+      sessionId: getSessionId(),
+      message: message,
+      page: 'chat/standalone',
+      lang: currentLang,
+      quoteShortcut: !!isShortcut
+    };
+    if(attachment){
+      payload.attachmentName = attachment.name;
+      payload.attachmentData = attachment.data;
+    }
+    return fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      if(!r.ok){
+        var err = new Error('chat_failed');
+        err.code = (r.status === 503) ? 'not_declared' : (r.status === 429 ? 'rate_limited' : 'generic');
+        throw err;
+      }
+      return r.json();
+    });
+  }
+
+  function clearAttachNote(){
+    attachNote.hidden = true;
+    attachNote.textContent = '';
+    if(attachBtn){ attachBtn.classList.remove('has-file'); }
+  }
+
+  function sendVisitorMessage(msg, isShortcut){
+    if(busy || !msg) return;
+    addMsg(msg, 'from-user');
+    lastMsgCount += 1;
+    hasChatted = true;
+
+    var attachment = pendingAttachment;
+    pendingAttachment = null;
+    clearAttachNote();
+
+    busy = true;
+    sendBtn.disabled = true;
+    if(quoteShortcutBtn){ quoteShortcutBtn.disabled = true; }
+    var thinkingEl = addMsg(dictVal('thinking'), 'from-bot is-thinking');
+
+    function finish(){
+      busy = false;
+      sendBtn.disabled = false;
+      if(quoteShortcutBtn){ quoteShortcutBtn.disabled = false; }
+    }
+
+    callChat(msg, isShortcut, attachment).then(function(res){
+      thinkingEl.remove();
+      if(res && res.error === 'not_configured'){
+        addMsg(errorCopy('not_declared'), 'from-bot is-error');
+        finish();
+        return;
+      }
+      pollMessages();
+      setPollInterval(4000);
+      finish();
+    }).catch(function(e){
+      thinkingEl.remove();
+      addMsg(errorCopy(e && e.code), 'from-bot is-error');
+      finish();
+    });
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var msg = (input.value || '').trim();
+    if(!msg){
+      if(pendingAttachment){
+        sendVisitorMessage(dictVal('attachedMessage'), false);
+      }
+      return;
+    }
+    input.value = '';
+    sendVisitorMessage(msg, false);
+  });
+
+  if(quoteShortcutBtn){
+    quoteShortcutBtn.addEventListener('click', function(){
+      ensureGreeting();
+      sendVisitorMessage(dictVal('requestQuoteMessage'), true);
+    });
+  }
+
+  if(attachBtn && attachInput){
+    attachBtn.addEventListener('click', function(){ attachInput.click(); });
+    attachInput.addEventListener('change', function(){
+      var file = attachInput.files && attachInput.files[0];
+      attachInput.value = '';
+      if(!file) return;
+      if(file.size > MAX_ATTACH_BYTES){
+        addMsg(dictVal('attachTooBig'), 'from-bot is-error');
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(){
+        var result = String(reader.result || '');
+        var comma = result.indexOf(',');
+        var base64 = comma !== -1 ? result.slice(comma + 1) : '';
+        if(!base64) return;
+        pendingAttachment = { name: file.name, data: base64 };
+        attachBtn.classList.add('has-file');
+        attachNote.hidden = false;
+        attachNote.textContent = '';
+        var dot = document.createElement('span');
+        dot.className = 'dot';
+        attachNote.appendChild(dot);
+        var label = document.createElement('span');
+        label.textContent = dictVal('attachReady').replace('{name}', file.name);
+        attachNote.appendChild(label);
+        var x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'x';
+        x.setAttribute('aria-label', 'Remove attachment');
+        x.textContent = '×';
+        x.addEventListener('click', function(){ pendingAttachment = null; clearAttachNote(); });
+        attachNote.appendChild(x);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+})();
+</script>
+</body>
+</html>
