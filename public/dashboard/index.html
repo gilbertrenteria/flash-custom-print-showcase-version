@@ -1,0 +1,2424 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#121208; --bg-raised:#1D1C11; --bg-card:#181711;
+    --ink:#F5F4EA; --ink-soft:#B7B597; --ink-faint:#7C7A5F;
+    --line:#332F1C;
+    --flash:#D9E021; --flash-ink:#15150D; --flash-deep:#8C9300;
+    --accent-text:#D9E021;
+    --div-signs:#6FC3E0;
+    --danger:#E0615C; --ok:#6FCF7A;
+    --font-display:'Teko','Arial Narrow',sans-serif;
+    --font-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,'SF Mono',monospace;
+  }
+  /* day (light) palette — system preference, then an explicit choice always wins */
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#F5F4EA; --bg-raised:#EBE9D8; --bg-card:#FFFFFF;
+      --ink:#15150D; --ink-soft:#54553E; --ink-faint:#8C8965;
+      --line:#DBD8C2;
+      --accent-text:#8C9300;
+      --div-signs:#1C7A9C;
+      --danger:#C23B36; --ok:#3F8F55;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F4EA; --bg-raised:#EBE9D8; --bg-card:#FFFFFF;
+    --ink:#15150D; --ink-soft:#54553E; --ink-faint:#8C8965;
+    --line:#DBD8C2;
+    --accent-text:#8C9300;
+    --div-signs:#1C7A9C;
+    --danger:#C23B36; --ok:#3F8F55;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  /* A thick, always-visible scrollbar everywhere (page, board, modal, chat
+     thread) -- not just a hover-reveal one. This used to be hidden
+     entirely on the theory that wheel/touch/drag still worked without it,
+     but for anyone whose mouse wheel doesn't work, a scrollbar you can
+     actually SEE (and grab) is the thing that tells you there's more
+     content below in the first place (the same way, e.g., this very chat
+     panel shows one) -- without it there's no visible sign a click-and-
+     drag would do anything, and nothing to grab directly with the mouse
+     either. Deliberately wide with a filled track, not a thin hairline,
+     so it reads clearly at a glance instead of blending into the page. */
+  *{ scrollbar-width:auto; scrollbar-color:var(--ink-faint) var(--line); }
+  *::-webkit-scrollbar{ width:16px; height:16px; }
+  *::-webkit-scrollbar-track{ background:var(--line); }
+  *::-webkit-scrollbar-thumb{ background:var(--ink-faint); border-radius:8px; border:3px solid var(--line); }
+  *::-webkit-scrollbar-thumb:hover{ background:var(--ink-soft); }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  body.is-panning, body.is-panning *{ cursor:grabbing !important; user-select:none !important; }
+  h1,h2,h3,h4{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:.01em; line-height:.95; margin:0; }
+  button{ font:inherit; }
+  a{ color:var(--accent-text); }
+  ::selection{ background:var(--flash); color:var(--flash-ink); }
+
+  #unavailableScreen{ min-height:100vh; display:none; align-items:center; justify-content:center; padding:40px 20px; text-align:center; }
+  #unavailableScreen.is-shown{ display:flex; }
+  #unavailableScreen .card{ max-width:440px; background:var(--bg-card); border:1px solid var(--line); border-radius:10px; padding:32px; }
+  #unavailableScreen h2{ font-size:26px; }
+  #unavailableScreen p{ margin-top:14px; color:var(--ink-soft); font-size:14px; }
+
+  #app{ min-height:100vh; display:none; flex-direction:column; }
+  #app.is-shown{ display:flex; }
+
+  .topbar{ position:sticky; top:0; z-index:20; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:14px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .topbar .brand{ font-family:var(--font-display); font-size:24px; text-transform:uppercase; letter-spacing:.02em; display:flex; align-items:baseline; gap:10px; white-space:nowrap; }
+  .topbar .brand .tag{ font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); font-weight:500; }
+  .tabs{ display:flex; gap:4px; flex-wrap:wrap; flex:1; }
+  .tab{ font-family:var(--font-mono); font-size:11.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; padding:9px 14px; border:1px solid var(--line); background:transparent; color:var(--ink-soft); cursor:pointer; border-radius:3px; transition:background .15s ease,color .15s ease,border-color .15s ease; }
+  .tab:hover{ color:var(--ink); border-color:var(--flash-deep); }
+  .tab.is-active{ background:var(--flash); color:var(--flash-ink); border-color:var(--flash); }
+  .tab-select{ display:none; font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:9px 10px; border:1px solid var(--line); border-radius:4px; background:var(--bg-card); color:var(--ink); flex:1; min-width:0; }
+  .status-pill{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; padding:6px 10px; border:1px solid var(--line); border-radius:20px; color:var(--ink-faint); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+  .status-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--ink-faint); }
+  .status-pill.is-live .dot{ background:var(--ok); }
+  .status-pill.is-live{ color:var(--ok); border-color:var(--ok); }
+
+  main{ flex:1; padding:24px 20px 80px; max-width:1240px; width:100%; margin-inline:auto; }
+  .panel{ display:none; }
+  .panel.is-active{ display:block; }
+
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:22px; }
+  .panel-head h2{ font-size:28px; }
+  .panel-head .sub{ margin-top:4px; font-size:13px; color:var(--ink-soft); }
+
+  .btn-flash{ font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; padding:11px 18px; background:var(--flash); color:var(--flash-ink); border:none; border-radius:4px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
+  .btn-flash:hover{ opacity:.9; }
+  .btn-ghost-dark{ font-family:var(--font-mono); font-size:11.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; padding:9px 14px; background:transparent; color:var(--ink-soft); border:1px solid var(--line); border-radius:4px; cursor:pointer; }
+  .btn-ghost-dark:hover{ color:var(--ink); border-color:var(--flash-deep); }
+
+  /* ---- Nav badge (unread chats) ---- */
+  .nav-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; margin-left:6px; border-radius:9px; background:var(--danger); color:#fff; font-size:9.5px; font-weight:700; line-height:1; vertical-align:2px; }
+  .nav-badge[hidden]{ display:none; }
+
+  /* ---- Needs Attention strip (Overview) ---- */
+  .attn-strip{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px; }
+  .attn-chip{ display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12px; font-weight:600; padding:10px 14px; border-radius:8px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink); cursor:pointer; text-align:left; }
+  .attn-chip:hover{ border-color:var(--flash-deep); }
+  .attn-chip .attn-num{ font-family:var(--font-display); font-size:20px; line-height:1; }
+  .attn-chip.sev-chat{ border-color:var(--div-signs); color:var(--div-signs); }
+  .attn-chip.sev-overdue{ border-color:var(--danger); color:var(--danger); }
+  .attn-chip.sev-rush{ border-color:var(--flash-deep); color:var(--accent-text); }
+  .attn-chip.sev-stale{ border-color:var(--div-signs); color:var(--div-signs); }
+  .attn-chip.is-calm{ color:var(--ink-faint); cursor:default; font-weight:500; }
+  .attn-chip.is-calm:hover{ border-color:var(--line); }
+
+  /* ---- Panel-head inline link (Overview -> marketing site) ---- */
+  .panel-head-link{ font-family:var(--font-mono); font-size:11.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--accent-text); text-decoration:none; border:1px solid var(--line); border-radius:4px; padding:9px 14px; white-space:nowrap; }
+  .panel-head-link:hover{ border-color:var(--flash-deep); }
+
+  /* ---- Section block (Overview: groups related cards under one header) ---- */
+  .section-block{ margin-bottom:28px; }
+  .section-block-head{ font-size:15px; color:var(--ink-soft); letter-spacing:.02em; margin-bottom:12px; }
+
+  /* ---- Overview ---- */
+  .kpi-grid{ display:grid; gap:14px; grid-template-columns:repeat(2,1fr); margin-bottom:26px; }
+  @media (min-width:640px){ .kpi-grid{ grid-template-columns:repeat(4,1fr); } }
+  .kpi-card{ background:var(--bg-card); border:1px solid var(--line); border-radius:8px; padding:18px; }
+  .kpi-card .kpi-label{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint); }
+  .kpi-card .kpi-value{ margin-top:8px; font-family:var(--font-display); font-size:34px; color:var(--accent-text); }
+  .kpi-card .kpi-note{ margin-top:4px; font-size:11.5px; color:var(--ink-faint); }
+
+  .chart-card{ background:var(--bg-card); border:1px solid var(--line); border-radius:8px; padding:18px 20px; margin-bottom:26px; }
+  .chart-card h3{ font-size:16px; margin-bottom:14px; }
+  .charts-row{ display:grid; gap:14px; grid-template-columns:1fr; }
+  @media (min-width:800px){ .charts-row{ grid-template-columns:1.3fr 1fr; } }
+  .stage-row{ display:flex; align-items:center; gap:12px; padding:7px 0; font-size:13px; }
+  .stage-row .stage-name{ width:120px; flex:none; color:var(--ink-soft); }
+  .stage-row .stage-bar-track{ flex:1; height:15px; background:var(--line); border-radius:8px; overflow:hidden; }
+  .stage-row .stage-bar-fill{ height:100%; border-radius:8px; background:linear-gradient(90deg, var(--accent-text), var(--flash-deep)); transition:width .5s cubic-bezier(.16,.9,.28,1); }
+  .stage-row .stage-count{ width:64px; text-align:right; font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint); }
+
+  /* ---- Division split donut ---- */
+  .donut-wrap{ display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+  .donut{ width:130px; height:130px; border-radius:50%; flex:none; position:relative; transition:background .4s ease; }
+  .donut::after{ content:''; position:absolute; inset:20px; border-radius:50%; background:var(--bg-card); transition:background .2s ease; }
+  .donut-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  .donut-center .dc-num{ font-family:var(--font-display); font-size:30px; color:var(--ink); line-height:1; }
+  .donut-center .dc-label{ font-family:var(--font-mono); font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint); }
+  .donut-legend{ display:flex; flex-direction:column; gap:12px; flex:1; min-width:150px; }
+  .donut-legend-row{ display:flex; align-items:center; gap:9px; font-size:12.5px; }
+  .donut-legend-dot{ width:10px; height:10px; border-radius:3px; flex:none; }
+  .donut-legend-name{ color:var(--ink); font-weight:600; }
+  .donut-legend-sub{ color:var(--ink-faint); font-family:var(--font-mono); font-size:11px; margin-left:auto; white-space:nowrap; }
+
+  /* ---- Orders trend chart ---- */
+  .trend-empty{ padding:34px 10px; text-align:center; color:var(--ink-faint); font-size:12.5px; }
+
+  .demo-banner{ display:none; align-items:center; gap:12px; background:rgba(217,224,33,.08); border:1px dashed var(--flash-deep); border-radius:8px; padding:12px 16px; margin-bottom:26px; font-size:13px; color:var(--ink-soft); }
+  .demo-banner.is-shown{ display:flex; }
+  .demo-banner strong{ color:var(--ink); }
+
+
+  /* ---- Orders board ---- */
+  .order-filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .order-filters select{ background:var(--bg-card); border:1px solid var(--line); color:var(--ink); padding:8px 10px; border-radius:4px; font-family:var(--font-mono); font-size:11.5px; }
+  .order-search{ background:var(--bg-card); border:1px solid var(--line); color:var(--ink); padding:8px 12px; border-radius:20px; font-size:12.5px; min-width:0; width:170px; }
+  .order-search:focus{ outline:none; border-color:var(--flash-deep); }
+  .order-subgroup-head{ font-family:var(--font-mono); font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:4px 2px 2px; }
+  .order-subgroup-head.sev-overdue{ color:var(--danger); }
+  .order-subgroup-head.sev-rush{ color:var(--accent-text); }
+  .quote-badge{ font-family:var(--font-mono); font-size:9px; letter-spacing:.04em; text-transform:uppercase; padding:2px 7px; border-radius:3px; background:rgba(111,195,224,.15); color:var(--div-signs); }
+
+  .order-kpi-strip{ display:grid; gap:10px; grid-template-columns:repeat(2,1fr); margin-bottom:18px; }
+  @media (min-width:640px){ .order-kpi-strip{ grid-template-columns:repeat(4,1fr); } }
+  .order-kpi{ background:var(--bg-card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; }
+  .order-kpi .ok-label{ font-family:var(--font-mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint); }
+  .order-kpi .ok-value{ margin-top:4px; font-family:var(--font-display); font-size:26px; color:var(--ink); }
+  .order-kpi.sev-overdue .ok-value{ color:var(--danger); }
+  .order-kpi.sev-rush .ok-value{ color:var(--accent-text); }
+  .stage-jump{ display:none; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:14px; -webkit-overflow-scrolling:touch; }
+  .stage-jump-btn{ flex:none; font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:8px 13px; border-radius:20px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink-soft); cursor:pointer; white-space:nowrap; scroll-snap-align:start; }
+  .stage-jump-btn .sj-count{ margin-left:5px; opacity:.7; }
+  .stage-jump-btn.is-active{ background:var(--flash); color:var(--flash-ink); border-color:var(--flash); }
+  .board{ display:grid; grid-template-columns:repeat(6, minmax(220px, 1fr)); gap:14px; overflow-x:auto; padding-bottom:10px; }
+  .board-col.is-terminal .board-col-head{ opacity:.6; }
+  .board-col{ background:var(--bg-raised); border:1px solid var(--line); border-radius:8px; display:flex; flex-direction:column; min-height:120px; }
+  .board-col-head{ padding:12px 14px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); }
+  .board-col-head .count{ background:var(--line); color:var(--ink); border-radius:10px; padding:1px 8px; font-size:10.5px; }
+  .board-col-body{ padding:10px; display:flex; flex-direction:column; gap:10px; flex:1; border-radius:0 0 8px 8px; transition:background .12s ease, outline-color .12s ease; outline:2px dashed transparent; outline-offset:-4px; }
+  .board-col-body.is-drag-over{ background:rgba(217,224,33,.08); outline-color:var(--flash-deep); }
+  .order-card{ background:var(--bg-card); border:1px solid var(--line); border-radius:7px; padding:12px; cursor:grab; display:flex; flex-direction:column; gap:8px; transition:opacity .15s ease, border-color .15s ease; }
+  .order-card:hover{ border-color:var(--flash-deep); }
+  .order-card:active{ cursor:grabbing; }
+  .order-card.is-dragging{ opacity:.35; }
+  .order-card .oc-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .order-card .oc-customer{ font-weight:600; font-size:13.5px; line-height:1.3; }
+  .div-badge{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; padding:2px 7px; border-radius:3px; flex:none; white-space:nowrap; }
+  .div-badge.apparel{ background:rgba(217,224,33,.15); color:var(--accent-text); }
+  .div-badge.signs{ background:rgba(111,195,224,.15); color:var(--div-signs); }
+  .demo-badge{ font-family:var(--font-mono); font-size:9px; letter-spacing:.04em; text-transform:uppercase; padding:2px 6px; border-radius:3px; border:1px dashed var(--ink-faint); color:var(--ink-faint); }
+  .rush-badge{ font-family:var(--font-mono); font-size:9px; letter-spacing:.04em; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:rgba(224,97,92,.14); color:var(--danger); border:1px solid var(--danger); }
+  .due-badge{ font-family:var(--font-mono); font-size:9px; letter-spacing:.04em; text-transform:uppercase; padding:2px 6px; border-radius:3px; border:1px solid var(--line); color:var(--ink-faint); }
+  .due-badge.is-overdue{ background:rgba(224,97,92,.14); color:var(--danger); border-color:var(--danger); }
+  .stale-badge{ font-family:var(--font-mono); font-size:9px; letter-spacing:.04em; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:rgba(111,195,224,.14); color:var(--div-signs); border:1px solid var(--div-signs); }
+  .oc-badges{ display:flex; flex-wrap:wrap; gap:5px; }
+  .order-card .oc-desc{ font-size:12px; color:var(--ink-soft); white-space:pre-line; max-height:96px; overflow-y:auto; line-height:1.5; }
+  .order-card .oc-contact{ font-family:var(--font-mono); font-size:10.5px; color:var(--ink-faint); display:flex; flex-direction:column; gap:1px; }
+  .order-card .oc-channel{ font-family:var(--font-mono); font-size:10px; letter-spacing:.03em; text-transform:uppercase; color:var(--ink-faint); }
+  .order-card .oc-contact-note{ font-size:12px; color:var(--ink-soft); font-style:italic; }
+  .order-card .oc-meta{ font-family:var(--font-mono); font-size:10px; color:var(--ink-faint); }
+  .order-card .oc-bottom{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .order-card .oc-amount{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink); }
+  .oc-quote-block{ background:rgba(217,224,33,.08); border:1px solid var(--flash-deep); border-radius:5px; padding:7px 9px; display:flex; flex-direction:column; gap:1px; }
+  .oc-quote-block .oc-quote-label{ font-family:var(--font-mono); font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--flash-deep); }
+  .oc-quote-block .oc-quote-amount{ font-family:var(--font-mono); font-size:15px; font-weight:600; color:var(--ink); }
+  .oc-quote-block .oc-quote-for{ font-size:12px; color:var(--ink-soft); }
+  .oc-quote-block .oc-quote-meta{ font-family:var(--font-mono); font-size:9.5px; color:var(--ink-faint); margin-top:2px; }
+  .oc-lost-block{ background:rgba(224,97,92,.08); border:1px solid var(--danger); border-radius:5px; padding:7px 9px; }
+  .oc-lost-block .oc-lost-label{ font-family:var(--font-mono); font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--danger); }
+  .oc-lost-block .oc-lost-note{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .oc-advance{ font-family:var(--font-mono); font-size:10px; letter-spacing:.04em; text-transform:uppercase; background:transparent; border:1px solid var(--line); color:var(--ink-soft); padding:4px 8px; border-radius:4px; cursor:pointer; }
+  .oc-advance:hover{ border-color:var(--flash-deep); color:var(--ink); }
+  .oc-advance:disabled{ opacity:.35; cursor:default; }
+  .oc-lost-btn{ font-family:var(--font-mono); font-size:10px; letter-spacing:.04em; text-transform:uppercase; background:transparent; border:1px solid var(--line); color:var(--danger); padding:4px 8px; border-radius:4px; cursor:pointer; }
+  .oc-lost-btn:hover{ border-color:var(--danger); background:rgba(224,97,92,.08); }
+  .board-empty{ padding:16px 10px; font-size:11.5px; color:var(--ink-faint); text-align:center; }
+
+  /* Tablet: fold the 6-column board into 3, wrapping to two rows instead of
+     forcing sideways scroll through six narrow columns. */
+  @media (max-width:1100px) and (min-width:761px){
+    .board{ grid-template-columns:repeat(3, minmax(200px, 1fr)); overflow-x:hidden; }
+  }
+  /* Phone: one stage at a time, full width, no drag — the stage-jump pill
+     row lets you flip between stages without endless vertical scrolling. */
+  @media (max-width:760px){
+    .stage-jump{ display:flex; }
+    .board{ grid-template-columns:1fr; overflow-x:hidden; gap:16px; }
+    .board-col{ display:none; }
+    .board-col.is-jump-target{ display:flex; }
+    .order-card{ cursor:pointer; }
+  }
+
+  /* ---- Vendors ---- */
+  .vendor-grid{ display:grid; gap:14px; grid-template-columns:1fr; }
+  @media (min-width:640px){ .vendor-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (min-width:960px){ .vendor-grid{ grid-template-columns:repeat(3,1fr); } }
+  .vendor-card{ background:var(--bg-card); border:1px solid var(--line); border-radius:8px; padding:16px; cursor:pointer; }
+  .vendor-card:hover{ border-color:var(--flash-deep); }
+  .vendor-card .v-name{ font-weight:600; font-size:14.5px; }
+  .vendor-card .v-specialty{ margin-top:2px; font-family:var(--font-mono); font-size:11px; color:var(--accent-text); text-transform:uppercase; letter-spacing:.04em; }
+  .vendor-card .v-contact{ margin-top:8px; font-size:12.5px; color:var(--ink-soft); }
+  .vendor-card .v-notes{ margin-top:6px; font-size:12px; color:var(--ink-faint); }
+  .empty-state{ background:var(--bg-card); border:1px dashed var(--line); border-radius:8px; padding:30px 20px; text-align:center; color:var(--ink-faint); font-size:13.5px; }
+
+  /* ---- FlashChat (visitors + chats) ---- */
+  .online-strip{ margin-bottom:16px; }
+  .online-toggle{ display:inline-flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:.03em; padding:8px 14px; border-radius:20px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink-soft); cursor:pointer; }
+  .online-toggle:hover{ border-color:var(--flash-deep); color:var(--ink); }
+  .online-toggle .v-dot{ width:8px; height:8px; border-radius:50%; background:var(--ink-faint); }
+  .online-toggle.has-visitors .v-dot{ background:var(--ok); box-shadow:0 0 0 3px rgba(63,143,85,.18); }
+  .online-toggle .online-chevron{ color:var(--ink-faint); font-size:10px; transition:transform .15s ease; }
+  .online-toggle.is-open .online-chevron{ transform:rotate(180deg); }
+  .online-detail{ margin-top:10px; display:flex; flex-direction:column; gap:8px; max-width:420px; }
+  .online-detail[hidden]{ display:none; }
+  .chat-section-header{ display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-faint); margin:18px 0 10px; }
+  .chat-section-header:first-child{ margin-top:0; }
+  .chat-section-header .count{ background:var(--line); color:var(--ink); border-radius:10px; padding:1px 8px; font-size:10.5px; font-weight:600; }
+  .chat-section-header.sev-reply{ color:var(--danger); }
+  .chat-section-header.sev-reply .count{ background:var(--danger); color:#fff; }
+  .chat-section-header.sev-unresolved{ color:var(--accent-text); }
+  .live-list{ display:flex; flex-direction:column; gap:10px; }
+  .visitor-row{ display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--line); border-radius:16px; padding:12px 16px; font-size:13px; box-shadow:0 1px 3px rgba(0,0,0,.06); transition:transform .1s ease, box-shadow .1s ease; }
+  .visitor-row:hover{ transform:translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,.1); }
+  .visitor-row .v-dot{ flex:none; width:9px; height:9px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px rgba(63,143,85,.18); }
+  .visitor-row .v-page{ flex:1; min-width:0; font-family:var(--font-mono); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .visitor-row .v-since{ flex:none; color:var(--ink-faint); font-size:11px; }
+  .chat-row{ display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--line); border-radius:16px; padding:13px 16px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.06); transition:transform .1s ease, box-shadow .1s ease, border-color .1s ease; }
+  .chat-row:hover{ border-color:var(--flash-deep); transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,.1); }
+  .chat-row .c-avatar{ flex:none; width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--div-signs), color-mix(in srgb, var(--div-signs) 60%, black)); display:flex; align-items:center; justify-content:center; color:#fff; }
+  .chat-row .c-avatar svg{ display:block; }
+  .chat-row .c-main{ flex:1; min-width:0; }
+  .chat-row .c-top{ display:flex; align-items:center; gap:6px 8px; margin-bottom:4px; flex-wrap:wrap; }
+  .chat-row .c-page{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); }
+  .chat-row .c-preview{ font-size:13px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chat-tag{ flex:none; font-family:var(--font-mono); font-size:9.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:4px 10px; border-radius:20px; border:1px solid var(--line); }
+  .chat-tag.tag-human{ color:var(--flash-ink); background:linear-gradient(135deg, var(--flash), var(--flash-deep)); border-color:var(--flash); }
+  .chat-tag.tag-unread{ color:#fff; background:var(--danger); border-color:var(--danger); }
+  .chat-tag.tag-none{ color:var(--ink-faint); }
+  .chat-tag.tag-quote{ color:var(--flash-ink); background:var(--flash); border-color:var(--flash-deep); }
+  .chat-tag.tag-resolved{ color:var(--ok); border-color:var(--ok); }
+  .chat-tag.tag-unresolved{ color:#fff; background:var(--danger); border-color:var(--danger); }
+  .live-filters{ display:flex; gap:10px; flex-wrap:wrap; }
+  .live-filters select{ font-family:var(--font-mono); font-size:12px; }
+  .chat-search-input{ font-size:12.5px; padding:7px 12px; border-radius:20px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink); min-width:0; width:160px; }
+  .chat-search-input:focus{ outline:none; border-color:var(--flash-deep); }
+  .chat-quick-replies{ display:flex; flex-wrap:wrap; gap:7px; padding:0 22px 12px; flex:none; }
+  .chat-quick-replies[hidden]{ display:none; }
+  .qr-chip{ font-family:var(--font-mono); font-size:11px; padding:6px 12px; border-radius:16px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink-soft); cursor:pointer; }
+  .qr-chip:hover{ border-color:var(--flash-deep); color:var(--ink); }
+  .settings-block{ background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; max-width:640px; }
+  .settings-block + .settings-block{ margin-top:24px; }
+  .settings-block.is-wide{ max-width:none; }
+  .settings-block h3{ font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin:0 0 14px; }
+  .settings-block.danger-zone{ border-color:var(--danger); }
+  .settings-block.danger-zone h3{ color:var(--danger); }
+  .danger-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid var(--line); }
+  .danger-row:last-of-type{ border-bottom:none; }
+  .danger-title{ font-weight:600; font-size:13.5px; }
+  .danger-sub{ margin-top:2px; font-size:12px; color:var(--ink-faint); max-width:400px; }
+  .danger-note{ margin-top:12px; font-size:12.5px; color:var(--ok); }
+  .danger-note[hidden]{ display:none; }
+  @media (max-width:560px){ .danger-row{ flex-direction:column; align-items:flex-start; } }
+  .quick-reply-add-form{ display:flex; gap:10px; margin-bottom:16px; }
+  .quick-reply-add-form input{ flex:1; min-width:0; border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-family:var(--font-body); font-size:13.5px; background:var(--bg); color:var(--ink); }
+  .quick-reply-add-form input:focus{ outline:none; border-color:var(--flash-deep); }
+  .quick-reply-row{ display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .quick-reply-row:last-child{ border-bottom:none; }
+  .quick-reply-text-input{ flex:1; min-width:0; border:1px solid transparent; background:transparent; padding:7px 9px; border-radius:6px; font-family:var(--font-body); font-size:13.5px; color:var(--ink); }
+  .quick-reply-text-input:hover, .quick-reply-text-input:focus{ border-color:var(--line); background:var(--bg); }
+  .quick-reply-text-input:focus{ outline:none; border-color:var(--flash-deep); }
+  .qr-order-btn{ flex:none; width:26px; height:26px; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--ink-faint); cursor:pointer; font-size:12px; line-height:1; }
+  .qr-order-btn:hover{ color:var(--ink); border-color:var(--flash-deep); }
+  .qr-order-btn:disabled{ opacity:.3; cursor:default; }
+  .qr-delete-btn:hover{ color:var(--danger); border-color:var(--danger); }
+  .modal.modal-chat{ width:min(560px, 100%); max-height:90vh; display:flex; flex-direction:column; padding:0; overflow:hidden; border-radius:22px; }
+  .chat-thread-head{ display:flex; align-items:center; gap:12px; padding:20px 22px 16px; border-bottom:1px solid var(--line); flex:none; }
+  .chat-thread-head-title{ font-family:var(--font-display); font-size:22px; line-height:1; }
+  .chat-thread-head-sub{ margin-top:3px; }
+  .chat-status-pill{ display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:4px 11px; border-radius:20px; background:var(--bg-card); color:var(--ink-faint); border:1px solid var(--line); }
+  .chat-status-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--ink-faint); }
+  .chat-status-pill.mode-human{ background:rgba(217,224,33,.14); color:var(--accent-text); border-color:var(--flash-deep); }
+  .chat-status-pill.mode-human .dot{ background:var(--flash); }
+  .chat-thread-head-spacer{ flex:1; }
+  .chat-thread-list{ display:flex; flex-direction:column; gap:14px; overflow-y:auto; padding:20px 22px; flex:1; min-height:260px; max-height:52vh; background:var(--bg); }
+  .chat-thread-row{ display:flex; align-items:flex-end; gap:9px; max-width:88%; }
+  .chat-thread-row.row-you{ align-self:flex-end; flex-direction:row-reverse; }
+  .chat-avatar{ flex:none; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10.5px; font-weight:700; color:#fff; }
+  .chat-avatar.av-visitor{ background:#8C8965; }
+  .chat-avatar.av-ai{ background:var(--div-signs); }
+  .chat-avatar.av-you{ background:linear-gradient(135deg, var(--flash), var(--flash-deep)); color:var(--flash-ink); }
+  .chat-thread-msg-wrap{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .row-you .chat-thread-msg-wrap{ align-items:flex-end; }
+  .chat-thread-msg{ font-size:14px; line-height:1.5; padding:11px 16px; border-radius:20px; box-shadow:0 1px 2px rgba(0,0,0,.08); word-wrap:break-word; }
+  .chat-thread-msg.from-visitor{ background:var(--bg-card); color:var(--ink); border:1px solid var(--line); border-bottom-left-radius:6px; }
+  .chat-thread-msg.from-ai{ background:color-mix(in srgb, var(--div-signs) 14%, var(--bg-card)); color:var(--ink); border:1px solid color-mix(in srgb, var(--div-signs) 35%, var(--line)); border-bottom-left-radius:6px; }
+  .chat-thread-msg.from-you{ background:linear-gradient(135deg, var(--flash), var(--flash-deep)); color:var(--flash-ink); font-weight:500; border-bottom-right-radius:6px; }
+  .chat-thread-time{ font-family:var(--font-mono); font-size:10px; color:var(--ink-faint); padding:0 4px; }
+  .chat-thread-form{ display:flex; gap:10px; align-items:center; padding:16px 22px 20px; flex:none; border-top:1px solid var(--line); }
+  .chat-thread-form input{ flex:1; min-width:0; background:var(--bg-card); border:1px solid var(--line); color:var(--ink); padding:13px 18px; font-family:var(--font-body); font-size:14px; border-radius:24px; }
+  .chat-thread-form input:focus{ outline:none; border-color:var(--flash-deep); box-shadow:0 0 0 3px rgba(217,224,33,.15); }
+  .chat-send-btn{ flex:none; width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, var(--flash), var(--flash-deep)); color:var(--flash-ink); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(140,147,0,.35); transition:transform .1s ease; }
+  .chat-send-btn:hover{ transform:scale(1.06); }
+  .chat-send-btn:disabled{ opacity:.5; cursor:default; transform:none; }
+  .chat-thread-actions{ display:flex; align-items:center; gap:10px; padding:0 22px 20px; flex:none; }
+
+  /* ---- Business info ---- */
+  .info-grid{ display:grid; gap:18px; grid-template-columns:1fr; }
+  @media (min-width:800px){ .info-grid{ grid-template-columns:1fr 1fr; } }
+  .info-field{ display:flex; flex-direction:column; gap:6px; }
+  .info-field label{ font-family:var(--font-mono); font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); }
+  .info-field textarea, .info-field input{ background:var(--bg-card); border:1px solid var(--line); color:var(--ink); padding:11px 12px; font-family:var(--font-body); font-size:13.5px; border-radius:5px; resize:vertical; min-height:44px; }
+  .info-field textarea:focus, .info-field input:focus{ outline:none; border-color:var(--flash-deep); }
+  .info-save-row{ margin-top:22px; display:flex; align-items:center; gap:14px; }
+  .info-save-note{ font-size:12.5px; color:var(--ok); opacity:0; transition:opacity .3s ease; }
+  .info-save-note.is-shown{ opacity:1; }
+
+
+  /* ---- Modal ---- */
+  .modal-backdrop{ position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal-backdrop[hidden]{ display:none; }
+  .modal{ width:min(480px, 100%); max-height:88vh; overflow-y:auto; background:var(--bg-raised); border:1px solid var(--line); border-radius:10px; padding:24px; }
+  .modal-title{ font-size:22px; margin-bottom:16px; }
+  .modal-form{ display:flex; flex-direction:column; gap:14px; }
+  .modal-field{ display:flex; flex-direction:column; gap:6px; }
+  .modal-field-label{ font-family:var(--font-mono); font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); }
+  .modal-field input, .modal-field textarea, .modal-field select{ background:var(--bg-card); border:1px solid var(--line); color:var(--ink); padding:10px 12px; font-family:var(--font-body); font-size:14px; border-radius:5px; }
+  .modal-field textarea{ min-height:70px; resize:vertical; }
+  .modal-field input:focus, .modal-field textarea:focus, .modal-field select:focus{ outline:none; border-color:var(--flash-deep); }
+  .field-error{ border-color:var(--danger) !important; }
+  .modal-actions{ display:flex; align-items:center; gap:10px; margin-top:20px; }
+  .btn-modal{ font-family:var(--font-mono); font-size:11.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; padding:10px 16px; border-radius:4px; border:1px solid var(--line); background:transparent; color:var(--ink-soft); cursor:pointer; }
+  .btn-modal:hover{ color:var(--ink); }
+  .btn-modal-primary{ background:var(--flash); color:var(--flash-ink); border-color:var(--flash); }
+  .btn-modal-primary:hover{ opacity:.9; }
+  .btn-modal-danger{ color:var(--danger); border-color:var(--danger); }
+  .btn-modal-danger:hover{ background:rgba(224,97,92,.1); }
+
+  /* ---- day/night manual toggle ---- */
+  .theme-toggle{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; flex:none; padding:0; border:1px solid var(--line); border-radius:4px; background:transparent; color:var(--ink-soft); cursor:pointer; transition:border-color .15s ease, color .15s ease; }
+  .theme-toggle:hover{ border-color:var(--flash-deep); color:var(--ink); }
+  .theme-toggle svg{ display:block; }
+  .theme-toggle .icon-moon{ display:block; }
+  .theme-toggle .icon-sun{ display:none; }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]) .theme-toggle .icon-sun{ display:block; }
+    :root:not([data-theme="dark"]) .theme-toggle .icon-moon{ display:none; }
+  }
+  :root[data-theme="light"] .theme-toggle .icon-sun{ display:block; }
+  :root[data-theme="light"] .theme-toggle .icon-moon{ display:none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun{ display:none; }
+  :root[data-theme="dark"] .theme-toggle .icon-moon{ display:block; }
+
+  #loginScreen{ min-height:100vh; display:none; align-items:center; justify-content:center; padding:40px 20px; }
+  #loginScreen.is-shown{ display:flex; }
+  #loginScreen .card{ width:min(340px, 100%); background:var(--bg-card); border:1px solid var(--line); border-radius:10px; padding:32px; }
+  #loginScreen h2{ font-size:26px; margin-bottom:6px; }
+  #loginScreen p{ font-size:13px; color:var(--ink-soft); margin-bottom:20px; }
+  #loginScreen input{ width:100%; background:var(--bg-raised); border:1px solid var(--line); color:var(--ink); padding:11px 12px; font-family:var(--font-body); font-size:14px; border-radius:5px; margin-bottom:12px; }
+  #loginScreen input:focus{ outline:none; border-color:var(--flash-deep); }
+  #loginError{ font-size:12.5px; color:var(--danger); min-height:16px; margin-bottom:8px; }
+
+  /* ---- Phone-width pass ---- */
+  @media (max-width:640px){
+    /* iOS Safari auto-zooms into any focused input/select under 16px --
+       keep every form field at 16px so tapping into one doesn't jerk the
+       whole page in and out on you. */
+    .modal-field input, .modal-field textarea, .modal-field select,
+    .info-field textarea, .info-field input,
+    #loginScreen input,
+    .chat-thread-form input, .quick-reply-add-form input, .quick-reply-text-input,
+    .chat-search-input, .order-filters select, .live-filters select{ font-size:16px; }
+
+    .topbar{ padding:11px 14px; gap:10px; }
+    .topbar .brand{ font-size:20px; }
+    .topbar .brand .tag{ display:none; }
+    .tabs{ display:none; }
+    .tab-select{ display:block; }
+    #logoutBtn{ padding:8px 11px; }
+    main{ padding:16px 14px 70px; }
+    .panel-head h2{ font-size:24px; }
+    .kpi-card .kpi-value{ font-size:28px; }
+
+    .modal{ width:100%; max-height:92vh; border-radius:14px 14px 0 0; align-self:flex-end; }
+    .modal-backdrop{ align-items:flex-end; padding:0; }
+    .modal-chat{ max-height:96vh; }
+    .chat-thread-list{ max-height:unset; }
+  }
+</style>
+
+<div id="loginScreen">
+  <div class="card">
+    <h2>FLASH</h2>
+    <p>Business Dashboard — sign in to continue.</p>
+    <form id="loginForm">
+      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+      <div id="loginError"></div>
+      <button type="submit" class="btn-flash" style="width:100%; justify-content:center;">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand">FLASH <span class="tag">Business Dashboard</span></div>
+    <nav class="tabs" id="tabs">
+      <button type="button" class="tab is-active" data-tab="overview">Overview</button>
+      <button type="button" class="tab" data-tab="orders">Orders</button>
+      <button type="button" class="tab" data-tab="live">FlashChat<span class="nav-badge" id="navBadgeChat" hidden>0</span></button>
+      <button type="button" class="tab" data-tab="vendors">Vendors</button>
+      <button type="button" class="tab" data-tab="settings">Settings</button>
+    </nav>
+    <select class="tab-select" id="tabSelect" aria-label="Go to section">
+      <option value="overview">Overview</option>
+      <option value="orders">Orders</option>
+      <option value="live" id="tabSelectLiveOption">FlashChat</option>
+      <option value="vendors">Vendors</option>
+      <option value="settings">Settings</option>
+    </select>
+    <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle day/night view" title="Toggle day/night view">
+      <svg class="theme-icon icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+      <svg class="theme-icon icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+    <span class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">Connecting</span></span>
+    <button type="button" class="btn-ghost-dark" id="logoutBtn">Log Out</button>
+  </header>
+
+  <main>
+    <!-- OVERVIEW -->
+    <section class="panel is-active" id="panel-overview">
+      <div class="panel-head">
+        <div>
+          <h2>Overview</h2>
+          <div class="sub">Everything moving through Flash right now.</div>
+        </div>
+        <a class="panel-head-link" id="quickLinks" href="https://flashcustomprint.com" target="_blank" rel="noopener noreferrer">Marketing Site &rarr;</a>
+      </div>
+
+      <div class="demo-banner" id="demoBanner">
+        <span><strong id="demoCount">0</strong> example order(s) are on the board below so you can see how it works. They're excluded from the numbers here.</span>
+        <button type="button" class="btn-ghost-dark" id="clearDemoBtn">Clear example orders</button>
+      </div>
+
+      <div class="attn-strip" id="attnStrip"></div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Active Orders</div><div class="kpi-value" id="kpiActive">0</div><div class="kpi-note">Not yet shipped</div></div>
+        <div class="kpi-card"><div class="kpi-label">New This Month</div><div class="kpi-value" id="kpiThisMonth">0</div><div class="kpi-note">Orders created</div></div>
+        <div class="kpi-card"><div class="kpi-label">Logged This Month</div><div class="kpi-value" id="kpiRevenueMonth">$0</div><div class="kpi-note">As entered here</div></div>
+        <div class="kpi-card"><div class="kpi-label">Logged Total</div><div class="kpi-value" id="kpiRevenueTotal">$0</div><div class="kpi-note">All orders on file</div></div>
+      </div>
+
+      <div class="section-block">
+        <h3 class="section-block-head">Orders Snapshot</h3>
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>Pipeline Breakdown</h3>
+            <div id="stageBreakdownBody"></div>
+          </div>
+          <div class="chart-card">
+            <h3>Split by Division</h3>
+            <div class="donut-wrap">
+              <div class="donut" id="donutRing">
+                <div class="donut-center"><span class="dc-num" id="donutTotal">0</span><span class="dc-label">Orders</span></div>
+              </div>
+              <div class="donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>New Orders — Last 14 Days</h3>
+          <div id="trendChart"></div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h3 class="section-block-head">Win / Loss</h3>
+        <div class="kpi-grid" style="margin-bottom:14px;">
+          <div class="kpi-card"><div class="kpi-label">Win Rate</div><div class="kpi-value" id="kpiWinRate">—</div><div class="kpi-note" id="kpiWinRateNote">Shipped vs. Lost/Declined</div></div>
+          <div class="kpi-card"><div class="kpi-label">Avg Deal Size</div><div class="kpi-value" id="kpiAvgDeal">$0</div><div class="kpi-note">Shipped orders</div></div>
+          <div class="kpi-card"><div class="kpi-label">Avg Margin</div><div class="kpi-value" id="kpiAvgMargin">—</div><div class="kpi-note" id="kpiAvgMarginNote">Sell price minus vendor cost</div></div>
+        </div>
+        <div class="chart-card">
+          <h3>Why Orders Are Lost</h3>
+          <div id="lostReasonBody"></div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h3 class="section-block-head">Site Traffic</h3>
+        <div class="kpi-grid" style="margin-bottom:14px;">
+          <div class="kpi-card"><div class="kpi-label">Visits Today</div><div class="kpi-value" id="kpiVisitsToday">0</div><div class="kpi-note">New visitors</div></div>
+          <div class="kpi-card"><div class="kpi-label">Visits (7 Days)</div><div class="kpi-value" id="kpiVisits7d">0</div><div class="kpi-note">New visitors</div></div>
+          <div class="kpi-card"><div class="kpi-label">Conversion (30d)</div><div class="kpi-value" id="kpiConversion">0%</div><div class="kpi-note">Visitors &rarr; quotes</div></div>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>Traffic — Last 14 Days</h3>
+            <div id="trafficChart"></div>
+          </div>
+          <div class="chart-card">
+            <h3>Top Sources — Last 30 Days</h3>
+            <div id="sourceBreakdownBody"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section class="panel" id="panel-orders">
+      <div class="panel-head">
+        <div>
+          <h2>Orders</h2>
+          <div class="sub">New Inquiry &rarr; Quoted &rarr; Paid &rarr; Sent to Vendor &rarr; QC &rarr; Shipped &mdash; drag a card to move it, or use its button.</div>
+        </div>
+        <div class="order-filters">
+          <input type="search" id="orderSearchInput" class="order-search" placeholder="Search orders…">
+          <select id="orderDivisionFilter">
+            <option value="all">All divisions</option>
+            <option value="apparel">Apparel</option>
+            <option value="signs">Signs</option>
+          </select>
+          <button type="button" class="btn-flash" id="newOrderBtn">+ New Order</button>
+        </div>
+      </div>
+      <div class="order-kpi-strip">
+        <div class="order-kpi"><div class="ok-label">Open Orders</div><div class="ok-value" id="okOpen">0</div></div>
+        <div class="order-kpi sev-overdue"><div class="ok-label">Overdue</div><div class="ok-value" id="okOverdue">0</div></div>
+        <div class="order-kpi sev-rush"><div class="ok-label">Rush</div><div class="ok-value" id="okRush">0</div></div>
+        <div class="order-kpi"><div class="ok-label">Logged This Week</div><div class="ok-value" id="okWeekRevenue">$0</div></div>
+      </div>
+      <div class="stage-jump" id="stageJump"></div>
+      <div class="board" id="board"></div>
+    </section>
+
+    <!-- FLASHCHAT -->
+    <section class="panel" id="panel-live">
+      <div class="panel-head">
+        <div>
+          <h2>FlashChat</h2>
+          <div class="sub">Every conversation FlashChat has with a visitor, and who's on your site right now.</div>
+        </div>
+        <div class="live-filters">
+          <input type="search" id="chatSearchInput" class="chat-search-input" placeholder="Search all chats…">
+          <select id="liveDivisionFilter">
+            <option value="">All divisions</option>
+            <option value="apparel">Apparel only</option>
+            <option value="signs">Signs only</option>
+          </select>
+          <select id="chatDaysFilter">
+            <option value="1">Last 1 day</option>
+            <option value="3">Last 3 days</option>
+            <option value="7">Last 7 days</option>
+            <option value="15">Last 15 days</option>
+            <option value="30">Last 30 days</option>
+          </select>
+        </div>
+      </div>
+      <div class="online-strip">
+        <button type="button" class="online-toggle" id="onlineToggle"><span class="v-dot"></span><span id="onlineCount">0</span> on your site now<span class="online-chevron">&#9662;</span></button>
+        <div class="online-detail" id="onlineDetail" hidden></div>
+      </div>
+      <div id="chatSessionsArea"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="panel" id="panel-settings">
+      <div class="panel-head">
+        <div>
+          <h2>Settings</h2>
+          <div class="sub">Canned replies for chat, and reference notes about Flash.</div>
+        </div>
+      </div>
+      <div class="settings-block">
+        <h3>Quick Replies</h3>
+        <form id="quickReplyAddForm" class="quick-reply-add-form">
+          <input type="text" id="quickReplyAddInput" placeholder="Add a quick reply…" maxlength="500">
+          <button type="submit" class="btn-flash">+ Add</button>
+        </form>
+        <div id="quickReplyList"></div>
+      </div>
+      <div class="settings-block is-wide">
+        <h3>Business Info</h3>
+        <div class="info-grid" id="infoGrid"></div>
+        <div class="info-save-row">
+          <button type="button" class="btn-flash" id="saveInfoBtn">Save Business Info</button>
+          <span class="info-save-note" id="infoSaveNote">Saved</span>
+        </div>
+      </div>
+      <div class="settings-block danger-zone">
+        <h3>Danger Zone</h3>
+        <div class="danger-row">
+          <div>
+            <div class="danger-title">Clear All Orders</div>
+            <div class="danger-sub">Permanently deletes every order on the board, real and example. Can't be undone.</div>
+          </div>
+          <button type="button" class="btn-modal btn-modal-danger" id="clearAllOrdersBtn">Clear Orders</button>
+        </div>
+        <div class="danger-row">
+          <div>
+            <div class="danger-title">Clear All Chats</div>
+            <div class="danger-sub">Permanently deletes every FlashChat conversation and message on file. Can't be undone.</div>
+          </div>
+          <button type="button" class="btn-modal btn-modal-danger" id="clearAllChatsBtn">Clear Chats</button>
+        </div>
+        <div class="danger-note" id="dangerZoneNote" hidden></div>
+      </div>
+    </section>
+
+    <!-- VENDORS -->
+    <section class="panel" id="panel-vendors">
+      <div class="panel-head">
+        <div>
+          <h2>Vendors</h2>
+          <div class="sub">The local shops you outsource printing, embroidery &amp; sign fabrication to.</div>
+        </div>
+        <button type="button" class="btn-flash" id="newVendorBtn">+ Add Vendor</button>
+      </div>
+      <div id="vendorArea"></div>
+    </section>
+
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+(function(){
+  var STAGES = ['New Inquiry','Quoted','Paid','Sent to Vendor','QC','Shipped','Lost/Declined'];
+  // The board itself only shows the stages an order actively moves through.
+  // Lost/Declined isn't a column you drag a card into -- it's a quick button
+  // on New Inquiry/Quoted cards (see canMarkLost in buildOrderCard) so a dead
+  // lead doesn't need its own permanent lane. It still exists as a real stage
+  // for every other purpose (Overview's Pipeline Breakdown, Win/Loss, TERMINAL_STAGES).
+  var BOARD_STAGES = STAGES.filter(function(s){ return s !== 'Lost/Declined'; });
+  var TERMINAL_STAGES = ['Shipped','Lost/Declined'];
+  var sessionsCache = [];
+
+  // How long a card can sit in a stage before it's flagged as needing a
+  // follow-up nudge (Overview attention strip + a badge on the card itself).
+  var STALE_INQUIRY_DAYS = 2;
+  var STALE_QUOTE_DAYS = 4;
+
+  var CONTACT_CHANNELS = [
+    { value:'web', label:'Website Quote Form' },
+    { value:'chat', label:'Website Chat' },
+    { value:'phone', label:'Phone Call' },
+    { value:'text', label:'Text' },
+    { value:'email', label:'Email' },
+    { value:'instagram', label:'Instagram' },
+    { value:'referral', label:'Referral' },
+    { value:'walk-in', label:'Walk-in' },
+    { value:'manual', label:'Other / Entered Manually' }
+  ];
+  function contactChannelLabel(source){
+    var match = CONTACT_CHANNELS.filter(function(c){ return c.value === source; })[0];
+    return match ? match.label : 'Other';
+  }
+  var LOST_REASONS = ['Price','Timing','Went with someone else','No response','Other'];
+
+  // Shared so the Orders board, the KPI strip, and the Overview "Needs
+  // Attention" strip all agree on what counts as rush/overdue -- one
+  // definition instead of three copies drifting apart.
+  function orderIsRush(o){
+    var text = (o.notes || '') + ' ' + (o.description || '');
+    if(/rush order:\s*yes/i.test(text) || /rush requested/i.test(text)) return true;
+    // The site's quote form always writes a "Rush order: Yes/No" line into
+    // the description, even when the answer is No -- strip that exact
+    // question/answer pair before falling back to a plain "rush" scan, or
+    // every non-rush quote (nearly all of them) would false-positive here.
+    var stripped = text.replace(/rush order:\s*no/gi, '');
+    return /\brush\b/i.test(stripped);
+  }
+  function orderIsOverdue(o){
+    if(!o.neededBy || TERMINAL_STAGES.indexOf(o.stage) !== -1) return false;
+    var d = new Date(o.neededBy + 'T23:59:59');
+    return !isNaN(d.getTime()) && d.getTime() < Date.now();
+  }
+  function daysSince(iso){
+    if(!iso) return 0;
+    var t = new Date(iso).getTime();
+    if(isNaN(t)) return 0;
+    return (Date.now() - t) / 86400000;
+  }
+  // A New Inquiry nobody's followed up on, or a Quote that's gone quiet --
+  // flagged separately from overdue/rush since those are about the job
+  // itself, this is about a lead going cold.
+  function orderIsStale(o){
+    if(o.stage === 'New Inquiry') return daysSince(o.createdAt) > STALE_INQUIRY_DAYS;
+    if(o.stage === 'Quoted') return daysSince(o.quotedAt || o.updatedAt) > STALE_QUOTE_DAYS;
+    return false;
+  }
+
+  var db = null;
+  var ordersCache = [], vendorsCache = [], infoCache = {};
+  var orderFilterDivision = 'all';
+  var draggedOrderId = null;
+
+  var app = document.getElementById('app');
+  var unavailableScreen = document.getElementById('unavailableScreen');
+  var statusPill = document.getElementById('statusPill');
+  var statusText = document.getElementById('statusText');
+  var modalBackdrop = document.getElementById('modalBackdrop');
+  var modal = document.getElementById('modal');
+
+  // ---------------- day/night (light/dark) manual toggle ----------------
+  (function(){
+    var toggle = document.getElementById('themeToggle');
+    if(!toggle) return;
+    var savedTheme = null;
+    try{ savedTheme = localStorage.getItem('flashDashTheme'); }catch(e){}
+    if(savedTheme === 'light' || savedTheme === 'dark'){
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+    function resolvedTheme(){
+      var attr = document.documentElement.getAttribute('data-theme');
+      if(attr === 'light' || attr === 'dark') return attr;
+      try{ return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; }catch(e){ return 'dark'; }
+    }
+    toggle.addEventListener('click', function(){
+      var next = resolvedTheme() === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try{ localStorage.setItem('flashDashTheme', next); }catch(e){}
+    });
+  })();
+
+  function fmtMoney(n){
+    n = Number(n) || 0;
+    return '$' + n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    try{
+      var d = new Date(iso);
+      return d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+    }catch(e){ return ''; }
+  }
+  function fmtRelative(iso){
+    if(!iso) return '';
+    var d;
+    try{ d = new Date(iso); }catch(e){ return ''; }
+    var diffMs = Date.now() - d.getTime();
+    var mins = Math.round(diffMs / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return mins + 'm ago';
+    var hrs = Math.round(mins / 60);
+    if(hrs < 24) return hrs + 'h ago';
+    var days = Math.round(hrs / 24);
+    if(days < 14) return days + 'd ago';
+    return fmtDate(iso);
+  }
+  function isThisMonth(iso){
+    if(!iso) return false;
+    var d = new Date(iso), now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  // ---------------- generic modal ----------------
+  function openModal(opts){
+    modal.innerHTML = '';
+    var h = document.createElement('h3');
+    h.className = 'modal-title';
+    h.textContent = opts.title;
+    modal.appendChild(h);
+
+    var formEl = document.createElement('div');
+    formEl.className = 'modal-form';
+    var inputs = {};
+    opts.fields.forEach(function(f){
+      var wrap = document.createElement('label');
+      wrap.className = 'modal-field';
+      var lab = document.createElement('span');
+      lab.className = 'modal-field-label';
+      lab.textContent = f.label;
+      wrap.appendChild(lab);
+      var el;
+      if(f.type === 'textarea'){
+        el = document.createElement('textarea');
+        if(f.big){ el.style.minHeight = '160px'; }
+      } else if(f.type === 'select'){
+        el = document.createElement('select');
+        (f.options || []).forEach(function(o){
+          var opt = document.createElement('option');
+          opt.value = o.value;
+          opt.textContent = o.label;
+          el.appendChild(opt);
+        });
+      } else {
+        el = document.createElement('input');
+        el.type = f.type || 'text';
+        if(f.type === 'number') el.step = 'any';
+      }
+      var v = (opts.values && opts.values[f.key] != null) ? opts.values[f.key] : '';
+      el.value = v;
+      if(f.placeholder) el.placeholder = f.placeholder;
+      wrap.appendChild(el);
+      formEl.appendChild(wrap);
+      inputs[f.key] = el;
+    });
+    modal.appendChild(formEl);
+
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    if(opts.onDelete){
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-modal btn-modal-danger';
+      delBtn.textContent = opts.deleteLabel || 'Delete';
+      delBtn.onclick = function(){
+        if(opts.onDelete() === false) return;
+        closeModal();
+      };
+      actions.appendChild(delBtn);
+    }
+    var spacer = document.createElement('div');
+    spacer.style.flex = '1';
+    actions.appendChild(spacer);
+    var cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn-modal';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = closeModal;
+    actions.appendChild(cancelBtn);
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn-modal btn-modal-primary';
+    saveBtn.textContent = opts.saveLabel || 'Save';
+    saveBtn.onclick = function(){
+      var values = {};
+      var missing = false;
+      opts.fields.forEach(function(f){
+        var raw = inputs[f.key].value;
+        inputs[f.key].classList.remove('field-error');
+        if(f.required && !String(raw).trim()){
+          missing = true;
+          inputs[f.key].classList.add('field-error');
+        }
+        values[f.key] = f.type === 'number' ? (raw === '' ? null : Number(raw)) : raw;
+      });
+      if(missing) return;
+      opts.onSave(values);
+      closeModal();
+    };
+    actions.appendChild(saveBtn);
+    modal.appendChild(actions);
+
+    modalBackdrop.hidden = false;
+  }
+  function closeModal(){
+    modalBackdrop.hidden = true;
+    modal.innerHTML = '';
+    modal.classList.remove('modal-chat');
+    if(chatThreadPollTimer){ clearInterval(chatThreadPollTimer); chatThreadPollTimer = null; }
+    chatThreadSessionId = null;
+  }
+  modalBackdrop.addEventListener('click', function(e){ if(e.target === modalBackdrop) closeModal(); });
+
+  // ---------------- tabs ----------------
+  var tabSelect = document.getElementById('tabSelect');
+  function goToTab(t){
+    document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('is-active', b.getAttribute('data-tab') === t); });
+    document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('is-active', p.id === 'panel-' + t); });
+    if(tabSelect && tabSelect.value !== t){ tabSelect.value = t; }
+  }
+  document.querySelectorAll('.tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      goToTab(btn.getAttribute('data-tab'));
+    });
+  });
+  if(tabSelect){
+    tabSelect.addEventListener('change', function(){ goToTab(tabSelect.value); });
+  }
+
+  // ---------------- REST data layer ----------------
+  // Small shim that mimics just the pieces of the old Firestore-style API
+  // (.add/.doc().set()/.doc().update()/.doc().delete()/.onSnapshot()) this
+  // file's rendering code already calls, but backed by our own /api/*
+  // endpoints. Keeping the same shape here means none of the render/CRUD
+  // code below had to change.
+  function apiFetch(path, opts){
+    opts = opts || {};
+    opts.credentials = 'same-origin';
+    opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    return fetch('/api' + path, opts).then(function(r){
+      if(r.status === 401){ showLogin(); throw new Error('unauthorized'); }
+      if(!r.ok){ throw new Error('request_failed_' + r.status); }
+      if(r.status === 204) return null;
+      return r.json();
+    });
+  }
+
+  function makeRestCollection(name){
+    var listeners = [];
+    var cache = [];
+    function notify(){ listeners.forEach(function(fn){ fn(cache); }); }
+    function refresh(){
+      return apiFetch('/' + name).then(function(rows){
+        cache = rows || [];
+        notify();
+        return cache;
+      });
+    }
+    return {
+      orderBy: function(){ return this; }, // server already returns rows pre-sorted
+      onSnapshot: function(cb, errCb){
+        listeners.push(function(rows){
+          cb({ docs: rows.map(function(r){ return { id: r.id, data: function(){ return r; } }; }) });
+        });
+        refresh().catch(function(e){ if(errCb) errCb(e); });
+      },
+      add: function(data){
+        return apiFetch('/' + name, { method:'POST', body: JSON.stringify(data) }).then(function(){ return refresh(); });
+      },
+      doc: function(id){
+        return {
+          set: function(data){
+            return apiFetch('/' + name + '/' + id, { method:'PUT', body: JSON.stringify(data) }).then(function(){ return refresh(); });
+          },
+          update: function(partial){
+            var existing = cache.filter(function(r){ return r.id === id; })[0] || {};
+            var merged = Object.assign({}, existing, partial);
+            return apiFetch('/' + name + '/' + id, { method:'PUT', body: JSON.stringify(merged) }).then(function(){ return refresh(); });
+          },
+          delete: function(){
+            return apiFetch('/' + name + '/' + id, { method:'DELETE' }).then(function(){ return refresh(); });
+          }
+        };
+      },
+      refresh: refresh
+    };
+  }
+
+  function makeRestDoc(name){
+    var listeners = [];
+    var cache = {};
+    function notify(){ listeners.forEach(function(fn){ fn(cache); }); }
+    function refresh(){
+      return apiFetch('/' + name).then(function(data){
+        cache = data || {};
+        notify();
+        return cache;
+      });
+    }
+    return {
+      onSnapshot: function(cb, errCb){
+        listeners.push(function(data){ cb({ exists: true, data: function(){ return data; } }); });
+        refresh().catch(function(e){ if(errCb) errCb(e); });
+      },
+      set: function(data){
+        return apiFetch('/' + name, { method:'PUT', body: JSON.stringify(data) }).then(function(){ return refresh(); });
+      },
+      refresh: refresh
+    };
+  }
+
+  var _ordersRest = null, _vendorsRest = null, _infoRest = null, _quickRepliesRest = null;
+  function ordersColl(){ if(!_ordersRest){ _ordersRest = makeRestCollection('orders'); } return _ordersRest; }
+  function vendorsColl(){ if(!_vendorsRest){ _vendorsRest = makeRestCollection('vendors'); } return _vendorsRest; }
+  function infoDocRef(){ if(!_infoRest){ _infoRest = makeRestDoc('info'); } return _infoRest; }
+  function quickRepliesColl(){ if(!_quickRepliesRest){ _quickRepliesRest = makeRestCollection('quick-replies'); } return _quickRepliesRest; }
+
+  // ---------------- Overview charts ----------------
+  function renderDivisionDonut(real){
+    var apparel = real.filter(function(o){ return o.division !== 'signs'; });
+    var signs = real.filter(function(o){ return o.division === 'signs'; });
+    var total = real.length;
+    var apparelPct = total > 0 ? (apparel.length / total * 100) : 0;
+    var ring = document.getElementById('donutRing');
+    var totalEl = document.getElementById('donutTotal');
+    var legend = document.getElementById('donutLegend');
+    totalEl.textContent = total;
+    if(total === 0){
+      ring.style.background = 'var(--line)';
+    } else {
+      ring.style.background = 'conic-gradient(var(--accent-text) 0% ' + apparelPct + '%, var(--div-signs) ' + apparelPct + '% 100%)';
+    }
+    var apparelRev = apparel.reduce(function(s,o){ return s + (Number(o.amount)||0); }, 0);
+    var signsRev = signs.reduce(function(s,o){ return s + (Number(o.amount)||0); }, 0);
+    legend.innerHTML = '';
+    [
+      { name:'Apparel', count:apparel.length, rev:apparelRev, color:'var(--accent-text)' },
+      { name:'Signs', count:signs.length, rev:signsRev, color:'var(--div-signs)' }
+    ].forEach(function(row){
+      var el = document.createElement('div');
+      el.className = 'donut-legend-row';
+      el.innerHTML = '<span class="donut-legend-dot" style="background:' + row.color + '"></span>' +
+        '<span class="donut-legend-name">' + row.name + '</span>' +
+        '<span class="donut-legend-sub">' + row.count + ' &middot; ' + fmtMoney(row.rev) + '</span>';
+      legend.appendChild(el);
+    });
+  }
+
+  function renderTrendChart(real){
+    var DAYS = 14;
+    var buckets = [];
+    var start = new Date();
+    start.setHours(0,0,0,0);
+    start = new Date(start.getTime() - (DAYS - 1) * 86400000);
+    for(var i = 0; i < DAYS; i++){
+      buckets.push({ date:new Date(start.getTime() + i*86400000), count:0 });
+    }
+    real.forEach(function(o){
+      if(!o.createdAt) return;
+      var d;
+      try{ d = new Date(o.createdAt); }catch(e){ return; }
+      d.setHours(0,0,0,0);
+      var idx = Math.round((d.getTime() - start.getTime()) / 86400000);
+      if(idx >= 0 && idx < buckets.length) buckets[idx].count++;
+    });
+    var wrap = document.getElementById('trendChart');
+    var maxCount = buckets.reduce(function(m,b){ return Math.max(m,b.count); }, 0);
+    var totalCount = buckets.reduce(function(s,b){ return s+b.count; }, 0);
+    if(totalCount === 0){
+      wrap.innerHTML = '<div class="trend-empty">No orders logged in the last 14 days yet.</div>';
+      return;
+    }
+    var W = 600, H = 150, padX = 8, padTop = 14, padBottom = 24;
+    var innerW = W - padX*2;
+    var innerH = H - padTop - padBottom;
+    var stepX = buckets.length > 1 ? innerW / (buckets.length - 1) : 0;
+    var scaleY = maxCount > 0 ? innerH / maxCount : 0;
+    var points = buckets.map(function(b, i){
+      return { x: padX + i*stepX, y: padTop + (innerH - b.count*scaleY), b:b };
+    });
+    var linePath = points.map(function(p,i){ return (i===0?'M':'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+    var areaPath = linePath +
+      ' L' + points[points.length-1].x.toFixed(1) + ',' + (padTop+innerH).toFixed(1) +
+      ' L' + points[0].x.toFixed(1) + ',' + (padTop+innerH).toFixed(1) + ' Z';
+    var dots = points.map(function(p){
+      var lbl = p.b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="var(--accent-text)"><title>' +
+        lbl + ': ' + p.b.count + ' order' + (p.b.count===1?'':'s') + '</title></circle>';
+    }).join('');
+    var firstLabel = points[0].b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    var lastLabel = points[points.length-1].b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    wrap.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:150px;display:block;" role="img" aria-label="New orders per day, last 14 days">' +
+        '<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="var(--accent-text)" stop-opacity="0.35"></stop>' +
+          '<stop offset="100%" stop-color="var(--accent-text)" stop-opacity="0"></stop>' +
+        '</linearGradient></defs>' +
+        '<path d="' + areaPath + '" fill="url(#trendFill)" stroke="none"></path>' +
+        '<path d="' + linePath + '" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>' +
+        dots +
+        '<text x="' + padX + '" y="' + (H-6) + '" font-size="9" fill="var(--ink-faint)" font-family="IBM Plex Mono, monospace">' + firstLabel + '</text>' +
+        '<text x="' + (W-padX) + '" y="' + (H-6) + '" font-size="9" fill="var(--ink-faint)" font-family="IBM Plex Mono, monospace" text-anchor="end">' + lastLabel + '</text>' +
+      '</svg>';
+  }
+
+  // ---------------- Site Traffic (Overview) ----------------
+  function renderTrafficChart(daily){
+    var wrap = document.getElementById('trafficChart');
+    var maxCount = daily.reduce(function(m,d){ return Math.max(m,d.count); }, 0);
+    var totalCount = daily.reduce(function(s,d){ return s+d.count; }, 0);
+    if(totalCount === 0){
+      wrap.innerHTML = '<div class="trend-empty">No visits logged in the last 14 days yet.</div>';
+      return;
+    }
+    var W = 600, H = 150, padX = 8, padTop = 14, padBottom = 24;
+    var innerW = W - padX*2;
+    var innerH = H - padTop - padBottom;
+    var stepX = daily.length > 1 ? innerW / (daily.length - 1) : 0;
+    var scaleY = maxCount > 0 ? innerH / maxCount : 0;
+    var points = daily.map(function(d, i){
+      return { x: padX + i*stepX, y: padTop + (innerH - d.count*scaleY), d:d };
+    });
+    var linePath = points.map(function(p,i){ return (i===0?'M':'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+    var areaPath = linePath +
+      ' L' + points[points.length-1].x.toFixed(1) + ',' + (padTop+innerH).toFixed(1) +
+      ' L' + points[0].x.toFixed(1) + ',' + (padTop+innerH).toFixed(1) + ' Z';
+    function fmtDayLabel(key){
+      var parts = key.split('-');
+      var d = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
+      return d.toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'});
+    }
+    var dots = points.map(function(p){
+      var lbl = fmtDayLabel(p.d.date);
+      return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="var(--div-signs)"><title>' +
+        lbl + ': ' + p.d.count + ' visit' + (p.d.count===1?'':'s') + '</title></circle>';
+    }).join('');
+    var firstLabel = fmtDayLabel(points[0].d.date);
+    var lastLabel = fmtDayLabel(points[points.length-1].d.date);
+    wrap.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:150px;display:block;" role="img" aria-label="Site visits per day, last 14 days">' +
+        '<defs><linearGradient id="trafficFill" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="var(--div-signs)" stop-opacity="0.35"></stop>' +
+          '<stop offset="100%" stop-color="var(--div-signs)" stop-opacity="0"></stop>' +
+        '</linearGradient></defs>' +
+        '<path d="' + areaPath + '" fill="url(#trafficFill)" stroke="none"></path>' +
+        '<path d="' + linePath + '" fill="none" stroke="var(--div-signs)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>' +
+        dots +
+        '<text x="' + padX + '" y="' + (H-6) + '" font-size="9" fill="var(--ink-faint)" font-family="IBM Plex Mono, monospace">' + firstLabel + '</text>' +
+        '<text x="' + (W-padX) + '" y="' + (H-6) + '" font-size="9" fill="var(--ink-faint)" font-family="IBM Plex Mono, monospace" text-anchor="end">' + lastLabel + '</text>' +
+      '</svg>';
+  }
+  function renderSourceBreakdown(topSources){
+    var body = document.getElementById('sourceBreakdownBody');
+    body.innerHTML = '';
+    if(!topSources || topSources.length === 0){
+      body.innerHTML = '<div class="empty-state">No visits logged in the last 30 days yet.</div>';
+      return;
+    }
+    var maxCount = topSources.reduce(function(m,s){ return Math.max(m,s.count); }, 0);
+    topSources.forEach(function(s){
+      var pct = maxCount > 0 ? Math.round((s.count / maxCount) * 100) : 0;
+      var row = document.createElement('div');
+      row.className = 'stage-row';
+      row.innerHTML = '<div class="stage-name">' + escapeHtml(s.source) + '</div>' +
+        '<div class="stage-bar-track"><div class="stage-bar-fill" style="width:' + pct + '%; background:linear-gradient(90deg, var(--div-signs), var(--flash-deep));"></div></div>' +
+        '<div class="stage-count">' + s.count + '</div>';
+      body.appendChild(row);
+    });
+  }
+  function renderTraffic(data){
+    document.getElementById('kpiVisitsToday').textContent = data.visitsToday || 0;
+    document.getElementById('kpiVisits7d').textContent = data.visits7d || 0;
+    document.getElementById('kpiConversion').textContent = (Math.round((data.conversionRate30d || 0) * 10) / 10) + '%';
+    renderTrafficChart(data.dailyVisits || []);
+    renderSourceBreakdown(data.topSources || []);
+  }
+  function fetchMetrics(){
+    apiFetch('/metrics/summary').then(renderTraffic).catch(function(){});
+  }
+
+  // ---------------- Overview ----------------
+  function renderOverview(){
+    var real = ordersCache.filter(function(o){ return !o.isExample; });
+    var demoOrders = ordersCache.filter(function(o){ return o.isExample; });
+
+    document.getElementById('demoBanner').classList.toggle('is-shown', demoOrders.length > 0);
+    document.getElementById('demoCount').textContent = demoOrders.length;
+
+    var active = real.filter(function(o){ return TERMINAL_STAGES.indexOf(o.stage) === -1; }).length;
+    var thisMonth = real.filter(function(o){ return isThisMonth(o.createdAt); }).length;
+    var revMonth = real.filter(function(o){ return isThisMonth(o.createdAt); }).reduce(function(s,o){ return s + (Number(o.amount)||0); }, 0);
+    var revTotal = real.reduce(function(s,o){ return s + (Number(o.amount)||0); }, 0);
+
+    document.getElementById('kpiActive').textContent = active;
+    document.getElementById('kpiThisMonth').textContent = thisMonth;
+    document.getElementById('kpiRevenueMonth').textContent = fmtMoney(revMonth);
+    document.getElementById('kpiRevenueTotal').textContent = fmtMoney(revTotal);
+
+    var maxCount = 0;
+    STAGES.forEach(function(s){ maxCount = Math.max(maxCount, real.filter(function(o){ return o.stage === s; }).length); });
+    var body = document.getElementById('stageBreakdownBody');
+    body.innerHTML = '';
+    STAGES.forEach(function(s){
+      var count = real.filter(function(o){ return o.stage === s; }).length;
+      var pct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+      var pctOfTotal = real.length > 0 ? Math.round((count / real.length) * 100) : 0;
+      var row = document.createElement('div');
+      row.className = 'stage-row';
+      row.innerHTML = '<div class="stage-name">' + escapeHtml(s) + '</div>' +
+        '<div class="stage-bar-track"><div class="stage-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="stage-count">' + count + ' &middot; ' + pctOfTotal + '%</div>';
+      body.appendChild(row);
+    });
+
+    renderDivisionDonut(real);
+    renderTrendChart(real);
+    renderWinLoss(real);
+    renderQuickLinks();
+  }
+
+  // Win rate = Shipped vs. Lost/Declined among orders that actually closed
+  // one way or the other -- New Inquiry/Quoted/etc still in flight don't
+  // count either way yet. Margin only shows once vendor cost is actually
+  // being entered on orders, so it starts blank rather than showing a
+  // misleading $0.
+  function renderWinLoss(real){
+    var shipped = real.filter(function(o){ return o.stage === 'Shipped'; });
+    var lost = real.filter(function(o){ return o.stage === 'Lost/Declined'; });
+    var closedTotal = shipped.length + lost.length;
+
+    var winRateEl = document.getElementById('kpiWinRate');
+    var winRateNote = document.getElementById('kpiWinRateNote');
+    if(closedTotal === 0){
+      winRateEl.textContent = '—';
+      winRateNote.textContent = 'No closed orders yet';
+    } else {
+      winRateEl.textContent = Math.round((shipped.length / closedTotal) * 100) + '%';
+      winRateNote.textContent = shipped.length + ' won, ' + lost.length + ' lost';
+    }
+
+    var dealAmounts = shipped.map(function(o){ return Number(o.amount) || 0; }).filter(function(n){ return n > 0; });
+    var avgDeal = dealAmounts.length ? (dealAmounts.reduce(function(a,b){ return a+b; }, 0) / dealAmounts.length) : 0;
+    document.getElementById('kpiAvgDeal').textContent = fmtMoney(avgDeal);
+
+    var marginRows = shipped.filter(function(o){ return o.vendorCost != null && o.vendorCost !== '' && o.amount; });
+    var marginEl = document.getElementById('kpiAvgMargin');
+    var marginNote = document.getElementById('kpiAvgMarginNote');
+    if(marginRows.length === 0){
+      marginEl.textContent = '—';
+      marginNote.textContent = 'Add vendor cost to orders to see this';
+    } else {
+      var avgMargin = marginRows.reduce(function(s,o){ return s + (Number(o.amount) - Number(o.vendorCost)); }, 0) / marginRows.length;
+      marginEl.textContent = fmtMoney(avgMargin);
+      marginNote.textContent = 'Across ' + marginRows.length + ' shipped order' + (marginRows.length === 1 ? '' : 's') + ' with cost entered';
+    }
+
+    var body = document.getElementById('lostReasonBody');
+    body.innerHTML = '';
+    if(lost.length === 0){
+      body.innerHTML = '<div class="empty-state">Nothing marked Lost/Declined yet.</div>';
+      return;
+    }
+    var counts = {};
+    lost.forEach(function(o){
+      var r = o.lostReason || 'Not recorded';
+      counts[r] = (counts[r] || 0) + 1;
+    });
+    var rows = Object.keys(counts).map(function(r){ return { reason:r, count:counts[r] }; }).sort(function(a,b){ return b.count - a.count; });
+    var maxCount = rows.reduce(function(m,r){ return Math.max(m, r.count); }, 0);
+    rows.forEach(function(r){
+      var pct = maxCount > 0 ? Math.round((r.count / maxCount) * 100) : 0;
+      var row = document.createElement('div');
+      row.className = 'stage-row';
+      row.innerHTML = '<div class="stage-name">' + escapeHtml(r.reason) + '</div>' +
+        '<div class="stage-bar-track"><div class="stage-bar-fill" style="width:' + pct + '%; background:linear-gradient(90deg, var(--danger), var(--flash-deep));"></div></div>' +
+        '<div class="stage-count">' + r.count + '</div>';
+      body.appendChild(row);
+    });
+  }
+
+  // Marketing Site link on Overview -- pulls the URL from Business Info so
+  // Gilbert can update it himself (Business Info tab) without a code change.
+  // No "www." -- that subdomain isn't set up in Cloudflare for this project
+  // (only the bare domain is, which is what this dashboard itself is served
+  // from), so "www.flashcustomprint.com" fails to resolve at all.
+  var DEFAULT_MARKETING_SITE_URL = 'https://flashcustomprint.com';
+  function renderQuickLinks(){
+    var ql = document.getElementById('quickLinks');
+    if(!ql) return;
+    var url = (infoCache && infoCache.marketingSiteUrl ? String(infoCache.marketingSiteUrl).trim() : '') || DEFAULT_MARKETING_SITE_URL;
+    // Strip stray whitespace typed into the middle of the URL (e.g. "flash
+    // custom print.com") -- a browser encodes those spaces as %20 and the
+    // domain fails to resolve, which looks exactly like "the link doesn't
+    // go where it should."
+    url = url.replace(/\s+/g, '');
+    // Guard against a URL typed without "http(s)://" (e.g. "flashcustomprint.com")
+    // -- without a protocol, browsers treat it as a path on THIS site instead
+    // of the actual domain.
+    if(!/^https?:\/\//i.test(url)){ url = 'https://' + url.replace(/^\/+/, ''); }
+    if(!url || url === 'https://'){ url = DEFAULT_MARKETING_SITE_URL; }
+    ql.href = url;
+  }
+  document.getElementById('clearDemoBtn').addEventListener('click', function(){
+    ordersCache.filter(function(o){ return o.isExample; }).forEach(function(o){
+      ordersColl().doc(o.id).delete();
+    });
+  });
+
+  // ---------------- Orders ----------------
+  function nextOrderFields(){
+    return [
+      { key:'customer', label:'Customer / Company', type:'text', required:true },
+      { key:'division', label:'Division', type:'select', options:[{value:'apparel',label:'Apparel'},{value:'signs',label:'Signs'}] },
+      { key:'source', label:'Contact Channel', type:'select', options: CONTACT_CHANNELS.map(function(c){ return { value:c.value, label:c.label }; }) },
+      { key:'description', label:'What are they asking about / ordering?', type:'textarea', required:true, big:true },
+      { key:'contactNote', label:'Initial Contact Note', type:'textarea', placeholder:'What did they say, when did we hear from them, anything else about first contact' },
+      { key:'qty', label:'Quantity', type:'number' },
+      { key:'amount', label:'Quoted Amount ($)', type:'number' },
+      { key:'quotedFor', label:'Quoted For', type:'text', placeholder:'What the price above actually covers' },
+      { key:'contactEmail', label:'Contact Email', type:'text' },
+      { key:'contactPhone', label:'Contact Phone', type:'text' },
+      { key:'neededBy', label:'Needed By', type:'date' },
+      { key:'vendorId', label:'Vendor', type:'select', options:[{value:'',label:'— none yet —'}].concat(vendorsCache.map(function(v){ return { value:v.id, label:v.name || 'Unnamed vendor' }; })) },
+      { key:'vendorCost', label:'Vendor Cost ($)', type:'number' },
+      { key:'notes', label:'Notes', type:'textarea' },
+      { key:'stage', label:'Stage', type:'select', options:STAGES.map(function(s){ return {value:s,label:s}; }) },
+      { key:'lostReason', label:'Lost/Declined Reason', type:'select', options:[{value:'',label:'—'}].concat(LOST_REASONS.map(function(r){ return {value:r,label:r}; })) },
+      { key:'lostNote', label:'Lost/Declined Note', type:'textarea' }
+    ];
+  }
+  document.getElementById('newOrderBtn').addEventListener('click', function(){
+    openModal({
+      title:'New Order',
+      fields: nextOrderFields(),
+      values: { division:'apparel', source:'phone', stage:'New Inquiry' },
+      saveLabel:'Add Order',
+      onSave: function(values){
+        var nowIso = new Date().toISOString();
+        var extra = { isExample:false, createdAt:nowIso, updatedAt:nowIso };
+        // Manually entering an order straight into Quoted (or later) with an
+        // amount means he's already priced it -- stamp quotedAt so it shows
+        // up correctly in the win/loss reporting.
+        if(values.stage !== 'New Inquiry' && values.amount && !values.quotedAt){ extra.quotedAt = nowIso; }
+        ordersColl().add(Object.assign({}, values, extra));
+      }
+    });
+  });
+  function openOrderEdit(o){
+    openModal({
+      title: o.customer || 'Edit Order',
+      fields: nextOrderFields(),
+      values: o,
+      saveLabel:'Save',
+      deleteLabel:'Delete Order',
+      onSave: function(values){
+        var extra = { isExample:o.isExample || false, createdAt:o.createdAt, updatedAt:new Date().toISOString() };
+        if(values.amount && !o.quotedAt){ extra.quotedAt = extra.updatedAt; }
+        ordersColl().doc(o.id).set(Object.assign({}, values, extra));
+      },
+      onDelete: function(){
+        if(!window.confirm('Delete this order? This can’t be undone.')) return false;
+        ordersColl().doc(o.id).delete();
+      }
+    });
+  }
+  document.getElementById('orderDivisionFilter').addEventListener('change', function(e){
+    orderFilterDivision = e.target.value;
+    renderOrders();
+  });
+  var orderSearchQuery = '';
+  var orderSearchInput = document.getElementById('orderSearchInput');
+  var orderSearchDebounce = null;
+  if(orderSearchInput){
+    orderSearchInput.addEventListener('input', function(){
+      if(orderSearchDebounce){ clearTimeout(orderSearchDebounce); }
+      orderSearchDebounce = setTimeout(function(){
+        orderSearchQuery = orderSearchInput.value.trim().toLowerCase();
+        renderOrders();
+      }, 200);
+    });
+  }
+  function renderOrderKpis(real){
+    var open = real.filter(function(o){ return TERMINAL_STAGES.indexOf(o.stage) === -1; });
+    var overdue = open.filter(orderIsOverdue).length;
+    var rush = open.filter(orderIsRush).length;
+    var weekCutoff = Date.now() - 7 * 86400000;
+    var weekRevenue = real.reduce(function(s, o){
+      var t = new Date(o.createdAt).getTime();
+      return (t >= weekCutoff) ? s + (Number(o.amount) || 0) : s;
+    }, 0);
+    var elOpen = document.getElementById('okOpen');
+    if(elOpen){ elOpen.textContent = open.length; }
+    var elOverdue = document.getElementById('okOverdue');
+    if(elOverdue){ elOverdue.textContent = overdue; }
+    var elRush = document.getElementById('okRush');
+    if(elRush){ elRush.textContent = rush; }
+    var elWeek = document.getElementById('okWeekRevenue');
+    if(elWeek){ elWeek.textContent = fmtMoney(weekRevenue); }
+  }
+  var activeJumpStage = BOARD_STAGES[0];
+  function renderStageJump(visible){
+    var jump = document.getElementById('stageJump');
+    if(!jump) return;
+    jump.innerHTML = '';
+    BOARD_STAGES.forEach(function(stage){
+      var count = visible.filter(function(o){ return o.stage === stage; }).length;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'stage-jump-btn' + (stage === activeJumpStage ? ' is-active' : '');
+      btn.innerHTML = escapeHtml(stage) + '<span class="sj-count">' + count + '</span>';
+      btn.addEventListener('click', function(){
+        activeJumpStage = stage;
+        renderOrders();
+      });
+      jump.appendChild(btn);
+    });
+  }
+  // Any move off New Inquiry (other than declaring it Lost/Declined outright)
+  // routes through here so a card can't quietly land in Quoted/Paid/etc with
+  // no real price behind it -- same rule whether it's the advance button or
+  // a drag straight across the board. Once o.quotedAt is set this is a no-op
+  // pass-through, so re-dragging an already-quoted card never re-prompts.
+  function beginOrderStageChange(o, targetStage){
+    if(targetStage === 'Lost/Declined'){
+      openLostReasonPrompt(o, targetStage);
+      return;
+    }
+    if(targetStage !== 'New Inquiry' && !o.quotedAt){
+      openQuotePrompt(o, targetStage);
+      return;
+    }
+    ordersColl().doc(o.id).update({ stage: targetStage, updatedAt: new Date().toISOString() });
+  }
+  function openQuotePrompt(o, targetStage){
+    openModal({
+      title: 'Quote ' + (o.customer || 'this order'),
+      fields: [
+        { key:'amount', label:'Quoted Amount ($)', type:'number', required:true },
+        { key:'quotedFor', label:'Quoted For', type:'text', required:true, placeholder:'What the price covers' }
+      ],
+      values: { amount: o.amount || '', quotedFor: o.quotedFor || o.description || '' },
+      saveLabel:'Mark as Quoted',
+      onSave: function(values){
+        var nowIso = new Date().toISOString();
+        ordersColl().doc(o.id).update({ stage: targetStage, amount: values.amount, quotedFor: values.quotedFor, quotedAt: nowIso, updatedAt: nowIso });
+      }
+    });
+  }
+  function openLostReasonPrompt(o, targetStage){
+    openModal({
+      title: 'Mark ' + (o.customer || 'this order') + ' Lost/Declined',
+      fields: [
+        { key:'lostReason', label:'Reason', type:'select', required:true, options: LOST_REASONS.map(function(r){ return { value:r, label:r }; }) },
+        { key:'lostNote', label:'Note (optional)', type:'textarea' }
+      ],
+      values: { lostReason: o.lostReason || '', lostNote: o.lostNote || '' },
+      saveLabel:'Mark Lost/Declined',
+      onSave: function(values){
+        ordersColl().doc(o.id).update({ stage: targetStage, lostReason: values.lostReason, lostNote: values.lostNote, updatedAt: new Date().toISOString() });
+      }
+    });
+  }
+  function buildOrderCard(o, stage, stageIdx){
+    var card = document.createElement('div');
+    card.className = 'order-card';
+    card.draggable = true;
+    var divClass = o.division === 'signs' ? 'signs' : 'apparel';
+    var divLabel = o.division === 'signs' ? 'Signs' : 'Apparel';
+    var nextStage = (TERMINAL_STAGES.indexOf(stage) === -1) ? STAGES[stageIdx + 1] : null;
+    var isRush = orderIsRush(o);
+    var isOverdue = orderIsOverdue(o);
+    var isStale = orderIsStale(o);
+    var isFromQuote = /^from-quote-/.test(o.id || '');
+    var contactBits = [];
+    if(o.contactEmail){ contactBits.push(o.contactEmail); }
+    if(o.contactPhone){ contactBits.push(o.contactPhone); }
+    var dueLabel = o.neededBy ? 'Due ' + fmtDate(o.neededBy) : '';
+    var isNewInquiry = o.stage === 'New Inquiry';
+    var isLost = o.stage === 'Lost/Declined';
+    var isQuotedOrLater = !isNewInquiry && !isLost;
+    // Where a lead is most likely to die -- before or right after a price
+    // is given. Later stages (Paid onward) have already committed, so no
+    // quick-decline button there; falling through after that goes through
+    // the edit modal instead.
+    var canMarkLost = isNewInquiry || o.stage === 'Quoted';
+    var quoteBlock = '';
+    if(isQuotedOrLater){
+      quoteBlock = '<div class="oc-quote-block"><span class="oc-quote-label">Quoted</span>' +
+        '<span class="oc-quote-amount">' + fmtMoney(o.amount) + (o.qty ? ' &middot; ' + o.qty + ' pc' : '') + '</span>' +
+        (o.quotedFor ? '<span class="oc-quote-for">' + escapeHtml(o.quotedFor) + '</span>' : '') +
+        (o.quotedAt ? '<span class="oc-quote-meta">Quoted ' + fmtRelative(o.quotedAt) + '</span>' : '') +
+        '</div>';
+    }
+    var lostBlock = '';
+    if(isLost && o.lostReason){
+      lostBlock = '<div class="oc-lost-block"><span class="oc-lost-label">Declined — ' + escapeHtml(o.lostReason) + '</span>' +
+        (o.lostNote ? '<div class="oc-lost-note">' + escapeHtml(o.lostNote) + '</div>' : '') +
+        '</div>';
+    }
+    card.innerHTML =
+      '<div class="oc-top"><span class="oc-customer">' + escapeHtml(o.customer || 'Untitled') + '</span>' +
+      '<span class="div-badge ' + divClass + '">' + divLabel + '</span></div>' +
+      '<div class="oc-badges">' +
+      (o.isExample ? '<span class="demo-badge">Demo</span>' : '') +
+      (isFromQuote ? '<span class="quote-badge">From Site</span>' : '') +
+      (isRush ? '<span class="rush-badge">Rush</span>' : '') +
+      (dueLabel ? '<span class="due-badge' + (isOverdue ? ' is-overdue' : '') + '">' + (isOverdue ? 'Overdue — ' : '') + escapeHtml(dueLabel) + '</span>' : '') +
+      (isStale ? '<span class="stale-badge">' + (isNewInquiry ? 'Needs Follow-up' : 'Gone Quiet') + '</span>' : '') +
+      '</div>' +
+      (isNewInquiry ? '<div class="oc-channel">via ' + escapeHtml(contactChannelLabel(o.source)) + '</div>' : '') +
+      (isNewInquiry && o.contactNote ? '<div class="oc-contact-note">' + escapeHtml(o.contactNote) + '</div>' : '') +
+      (contactBits.length ? '<div class="oc-contact">' + contactBits.map(escapeHtml).join('<br>') + '</div>' : '') +
+      '<div class="oc-desc">' + escapeHtml(o.description || '') + '</div>' +
+      quoteBlock + lostBlock +
+      '<div class="oc-meta">First contacted ' + fmtRelative(o.createdAt) + '</div>' +
+      '<div class="oc-bottom">' +
+      (canMarkLost ? '<button type="button" class="oc-lost-btn">Lost/Declined</button>' : '') +
+      (nextStage ? '<button type="button" class="oc-advance" data-next="' + escapeHtml(nextStage) + '">' + escapeHtml(nextStage) + ' &rarr;</button>' : '') +
+      '</div>';
+    card.addEventListener('click', function(e){
+      if(e.target.closest('.oc-advance') || e.target.closest('.oc-lost-btn')) return;
+      openOrderEdit(o);
+    });
+    card.addEventListener('dragstart', function(e){
+      draggedOrderId = o.id;
+      card.classList.add('is-dragging');
+      try{ e.dataTransfer.setData('text/plain', o.id); e.dataTransfer.effectAllowed = 'move'; }catch(err){}
+    });
+    card.addEventListener('dragend', function(){
+      card.classList.remove('is-dragging');
+      draggedOrderId = null;
+    });
+    var advanceBtn = card.querySelector('.oc-advance');
+    if(advanceBtn){
+      advanceBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        beginOrderStageChange(o, nextStage);
+      });
+    }
+    var lostBtn = card.querySelector('.oc-lost-btn');
+    if(lostBtn){
+      lostBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        beginOrderStageChange(o, 'Lost/Declined');
+      });
+    }
+    return card;
+  }
+  function renderOrders(){
+    var board = document.getElementById('board');
+    board.innerHTML = '';
+    var real = ordersCache.filter(function(o){ return !o.isExample; });
+    renderOrderKpis(real);
+    var visible = ordersCache.filter(function(o){ return orderFilterDivision === 'all' || o.division === orderFilterDivision; });
+    if(orderSearchQuery){
+      visible = visible.filter(function(o){
+        return ((o.customer || '') + ' ' + (o.description || '') + ' ' + (o.notes || '')).toLowerCase().indexOf(orderSearchQuery) !== -1;
+      });
+    }
+    renderStageJump(visible);
+    BOARD_STAGES.forEach(function(stage, stageIdx){
+      var col = document.createElement('div');
+      col.className = 'board-col' + (stage === activeJumpStage ? ' is-jump-target' : '');
+      var inStage = visible.filter(function(o){ return o.stage === stage; });
+      var head = document.createElement('div');
+      head.className = 'board-col-head';
+      head.innerHTML = '<span>' + escapeHtml(stage) + '</span><span class="count">' + inStage.length + '</span>';
+      col.appendChild(head);
+      var colBody = document.createElement('div');
+      colBody.className = 'board-col-body';
+      var dragCounter = 0;
+      colBody.addEventListener('dragenter', function(e){
+        e.preventDefault();
+        dragCounter++;
+        colBody.classList.add('is-drag-over');
+      });
+      colBody.addEventListener('dragover', function(e){
+        e.preventDefault();
+        try{ e.dataTransfer.dropEffect = 'move'; }catch(err){}
+      });
+      colBody.addEventListener('dragleave', function(){
+        dragCounter = Math.max(0, dragCounter - 1);
+        if(dragCounter === 0) colBody.classList.remove('is-drag-over');
+      });
+      colBody.addEventListener('drop', function(e){
+        e.preventDefault();
+        dragCounter = 0;
+        colBody.classList.remove('is-drag-over');
+        var id = draggedOrderId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+        if(!id) return;
+        var order = ordersCache.filter(function(x){ return x.id === id; })[0];
+        if(!order || order.stage === stage) return;
+        beginOrderStageChange(order, stage);
+      });
+      if(inStage.length === 0){
+        var empty = document.createElement('div');
+        empty.className = 'board-empty';
+        empty.textContent = 'No orders';
+        colBody.appendChild(empty);
+      } else {
+        // Break the column into Overdue / Rush / Standard buckets so a
+        // busy stage reads as categories instead of one long unbroken
+        // stack. Headers only appear once there's more than one bucket in
+        // play -- a column that's entirely "standard" stays exactly as
+        // before, no extra clutter.
+        var overdueBucket = inStage.filter(orderIsOverdue).sort(function(a, b){ return new Date(a.neededBy) - new Date(b.neededBy); });
+        var overdueIds = overdueBucket.map(function(o){ return o.id; });
+        var rushBucket = inStage.filter(function(o){ return orderIsRush(o) && overdueIds.indexOf(o.id) === -1; });
+        var rushIds = rushBucket.map(function(o){ return o.id; });
+        var standardBucket = inStage.filter(function(o){ return overdueIds.indexOf(o.id) === -1 && rushIds.indexOf(o.id) === -1; });
+        var bucketsPresent = (overdueBucket.length ? 1 : 0) + (rushBucket.length ? 1 : 0) + (standardBucket.length ? 1 : 0);
+        var showHeaders = bucketsPresent > 1;
+        [
+          { label:'Overdue', cls:'sev-overdue', items:overdueBucket },
+          { label:'Rush', cls:'sev-rush', items:rushBucket },
+          { label:'Standard', cls:'', items:standardBucket }
+        ].forEach(function(bucket){
+          if(bucket.items.length === 0) return;
+          if(showHeaders){
+            var bHead = document.createElement('div');
+            bHead.className = 'order-subgroup-head' + (bucket.cls ? ' ' + bucket.cls : '');
+            bHead.textContent = bucket.label + ' · ' + bucket.items.length;
+            colBody.appendChild(bHead);
+          }
+          bucket.items.forEach(function(o){
+            colBody.appendChild(buildOrderCard(o, stage, stageIdx));
+          });
+        });
+      }
+      col.appendChild(colBody);
+      board.appendChild(col);
+    });
+    updateAttention();
+  }
+
+  // ---------------- Vendors ----------------
+  function vendorFields(){
+    return [
+      { key:'name', label:'Vendor / Shop Name', type:'text', required:true },
+      { key:'specialty', label:'Specialty', type:'text', placeholder:'e.g. Screen printing, Embroidery, Sign fabrication' },
+      { key:'contact', label:'Contact (phone/email)', type:'text' },
+      { key:'notes', label:'Notes', type:'textarea' }
+    ];
+  }
+  document.getElementById('newVendorBtn').addEventListener('click', function(){
+    openModal({
+      title:'Add Vendor',
+      fields: vendorFields(),
+      saveLabel:'Add Vendor',
+      onSave: function(values){
+        vendorsColl().add(Object.assign({}, values, { createdAt:new Date().toISOString() }));
+      }
+    });
+  });
+  function renderVendors(){
+    var area = document.getElementById('vendorArea');
+    area.innerHTML = '';
+    if(vendorsCache.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'No vendors yet — add the local shops you outsource printing, embroidery, and sign fabrication to.';
+      area.appendChild(empty);
+      return;
+    }
+    var grid = document.createElement('div');
+    grid.className = 'vendor-grid';
+    vendorsCache.forEach(function(v){
+      var card = document.createElement('div');
+      card.className = 'vendor-card';
+      card.innerHTML = '<div class="v-name">' + escapeHtml(v.name || 'Untitled') + '</div>' +
+        (v.specialty ? '<div class="v-specialty">' + escapeHtml(v.specialty) + '</div>' : '') +
+        (v.contact ? '<div class="v-contact">' + escapeHtml(v.contact) + '</div>' : '') +
+        (v.notes ? '<div class="v-notes">' + escapeHtml(v.notes) + '</div>' : '');
+      card.addEventListener('click', function(){
+        openModal({
+          title: v.name || 'Edit Vendor',
+          fields: vendorFields(),
+          values: v,
+          saveLabel:'Save',
+          deleteLabel:'Delete Vendor',
+          onSave: function(values){ vendorsColl().doc(v.id).set(Object.assign({}, values, { createdAt:v.createdAt })); },
+          onDelete: function(){ vendorsColl().doc(v.id).delete(); }
+        });
+      });
+      grid.appendChild(card);
+    });
+    area.appendChild(grid);
+  }
+
+  // ---------------- Business Info ----------------
+  var INFO_FIELDS = [
+    { key:'divisions', label:'Divisions & Services' },
+    { key:'location', label:'Location' },
+    { key:'yearsInBusiness', label:'Years in Business' },
+    { key:'legalStatus', label:'Legal Status' },
+    { key:'contact', label:'Contact' },
+    { key:'model', label:'Production Model' },
+    { key:'supplier', label:'Supplier' },
+    { key:'volume', label:'Current Volume' },
+    { key:'acquisitionToday', label:'How You Get Customers Today' },
+    { key:'growthGoal', label:'Growth Goal' },
+    { key:'pricingNotes', label:'Pricing & Order Stages' },
+    { key:'marketingSiteUrl', label:'Marketing Site URL' }
+  ];
+  var infoInputs = {};
+  function buildInfoGrid(){
+    var grid = document.getElementById('infoGrid');
+    grid.innerHTML = '';
+    INFO_FIELDS.forEach(function(f){
+      var wrap = document.createElement('div');
+      wrap.className = 'info-field';
+      var lab = document.createElement('label');
+      lab.textContent = f.label;
+      wrap.appendChild(lab);
+      var el = document.createElement('textarea');
+      el.rows = 2;
+      el.id = 'info_' + f.key;
+      wrap.appendChild(el);
+      grid.appendChild(wrap);
+      infoInputs[f.key] = el;
+    });
+  }
+  buildInfoGrid();
+  function renderInfo(data){
+    INFO_FIELDS.forEach(function(f){
+      var el = infoInputs[f.key];
+      if(document.activeElement === el) return; // don't clobber an in-progress edit
+      el.value = data && data[f.key] != null ? data[f.key] : '';
+    });
+  }
+  document.getElementById('saveInfoBtn').addEventListener('click', function(){
+    var values = {};
+    INFO_FIELDS.forEach(function(f){ values[f.key] = infoInputs[f.key].value; });
+    infoDocRef().set(values).then(function(){
+      var note = document.getElementById('infoSaveNote');
+      note.classList.add('is-shown');
+      setTimeout(function(){ note.classList.remove('is-shown'); }, 1800);
+    });
+  });
+
+  // ---------------- Danger Zone (Settings) ----------------
+  // These only ever run from Gilbert's own click on the confirm dialog --
+  // nothing here fires on page load or on any automated pass, since
+  // permanently deleting his data is not something this dashboard (or
+  // Claude) does on its own initiative.
+  function showDangerNote(text){
+    var note = document.getElementById('dangerZoneNote');
+    if(!note) return;
+    note.textContent = text;
+    note.hidden = false;
+    setTimeout(function(){ note.hidden = true; }, 4000);
+  }
+  var clearAllOrdersBtn = document.getElementById('clearAllOrdersBtn');
+  if(clearAllOrdersBtn){
+    clearAllOrdersBtn.addEventListener('click', function(){
+      var n = ordersCache.length;
+      if(n === 0){ showDangerNote('No orders to clear.'); return; }
+      if(!window.confirm('Delete all ' + n + ' order(s) from the board? This can’t be undone.')) return;
+      clearAllOrdersBtn.disabled = true;
+      Promise.all(ordersCache.map(function(o){ return apiFetch('/orders/' + o.id, { method:'DELETE' }); }))
+        .then(function(){ clearAllOrdersBtn.disabled = false; ordersColl().refresh(); showDangerNote('All orders cleared.'); })
+        .catch(function(){ clearAllOrdersBtn.disabled = false; showDangerNote('Something went wrong -- some orders may not have cleared.'); });
+    });
+  }
+  var clearAllChatsBtn = document.getElementById('clearAllChatsBtn');
+  if(clearAllChatsBtn){
+    clearAllChatsBtn.addEventListener('click', function(){
+      // Pull the widest window (30 days) fresh, independent of whatever
+      // filter happens to be set on the FlashChat tab right now, so
+      // "clear all" really means all.
+      apiFetch('/live/sessions?days=30').then(function(data){
+        var sessions = (data && data.sessions) || [];
+        var n = sessions.length;
+        if(n === 0){ showDangerNote('No chats to clear.'); return; }
+        if(!window.confirm('Delete all ' + n + ' chat(s) and their messages? This can’t be undone.')) return;
+        clearAllChatsBtn.disabled = true;
+        Promise.all(sessions.map(function(s){ return apiFetch('/live/sessions/' + encodeURIComponent(s.id), { method:'DELETE' }); }))
+          .then(function(){ clearAllChatsBtn.disabled = false; loadChatSessions(); loadVisitors(); showDangerNote('All chats cleared.'); })
+          .catch(function(){ clearAllChatsBtn.disabled = false; showDangerNote('Something went wrong -- some chats may not have cleared.'); });
+      }).catch(function(){ showDangerNote('Could not load chats to clear -- try again.'); });
+    });
+  }
+
+  // ---------------- Quick Replies (Settings + used from Live chat) ----------------
+  var quickRepliesCache = [];
+  function renderQuickReplies(){
+    var area = document.getElementById('quickReplyList');
+    if(!area) return;
+    area.innerHTML = '';
+    if(quickRepliesCache.length === 0){
+      area.innerHTML = '<div class="empty-state">No quick replies yet — add a few common answers above.</div>';
+      return;
+    }
+    quickRepliesCache.forEach(function(qr, idx){
+      var row = document.createElement('div');
+      row.className = 'quick-reply-row';
+      var textInput = document.createElement('input');
+      textInput.type = 'text';
+      textInput.className = 'quick-reply-text-input';
+      textInput.value = qr.text;
+      textInput.maxLength = 500;
+      textInput.addEventListener('change', function(){
+        var val = textInput.value.trim();
+        if(!val || val === qr.text) { textInput.value = qr.text; return; }
+        quickRepliesColl().doc(qr.id).update({ text: val });
+      });
+      row.appendChild(textInput);
+
+      var upBtn = document.createElement('button');
+      upBtn.type = 'button';
+      upBtn.className = 'qr-order-btn';
+      upBtn.title = 'Move up';
+      upBtn.textContent = '↑';
+      upBtn.disabled = idx === 0;
+      upBtn.addEventListener('click', function(){
+        var prev = quickRepliesCache[idx - 1];
+        if(!prev) return;
+        Promise.all([
+          quickRepliesColl().doc(qr.id).update({ sortOrder: prev.sortOrder }),
+          quickRepliesColl().doc(prev.id).update({ sortOrder: qr.sortOrder })
+        ]);
+      });
+      row.appendChild(upBtn);
+
+      var downBtn = document.createElement('button');
+      downBtn.type = 'button';
+      downBtn.className = 'qr-order-btn';
+      downBtn.title = 'Move down';
+      downBtn.textContent = '↓';
+      downBtn.disabled = idx === quickRepliesCache.length - 1;
+      downBtn.addEventListener('click', function(){
+        var next = quickRepliesCache[idx + 1];
+        if(!next) return;
+        Promise.all([
+          quickRepliesColl().doc(qr.id).update({ sortOrder: next.sortOrder }),
+          quickRepliesColl().doc(next.id).update({ sortOrder: qr.sortOrder })
+        ]);
+      });
+      row.appendChild(downBtn);
+
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'qr-order-btn qr-delete-btn';
+      delBtn.title = 'Delete';
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', function(){
+        if(!window.confirm('Delete this quick reply?')) return;
+        quickRepliesColl().doc(qr.id).delete();
+      });
+      row.appendChild(delBtn);
+
+      area.appendChild(row);
+    });
+  }
+
+  var quickReplyAddForm = document.getElementById('quickReplyAddForm');
+  var quickReplyAddInput = document.getElementById('quickReplyAddInput');
+  if(quickReplyAddForm){
+    quickReplyAddForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var text = (quickReplyAddInput.value || '').trim();
+      if(!text) return;
+      quickReplyAddInput.value = '';
+      quickRepliesColl().add({ text: text });
+    });
+  }
+
+  function renderQuickReplyChips(container, inputEl){
+    if(!container) return;
+    if(quickRepliesCache.length === 0){ container.innerHTML = ''; container.hidden = true; return; }
+    container.hidden = false;
+    container.innerHTML = quickRepliesCache.map(function(qr){
+      var short = qr.text.length > 44 ? qr.text.slice(0, 44) + '…' : qr.text;
+      return '<button type="button" class="qr-chip" data-id="' + qr.id + '">' + escapeHtml(short) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(container.querySelectorAll('.qr-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var qr = quickRepliesCache.filter(function(x){ return x.id === btn.getAttribute('data-id'); })[0];
+        if(qr && inputEl){ inputEl.value = qr.text; inputEl.focus(); }
+      });
+    });
+  }
+
+  // ---------------- Live (visitors + chats) ----------------
+  var chatDaysFilter = document.getElementById('chatDaysFilter');
+  var chatThreadSessionId = null;
+  var chatThreadPollTimer = null;
+  var chatThreadRenderedCount = -1;
+
+  function fmtSince(iso){
+    if(!iso) return '';
+    var ms = Date.now() - new Date(iso).getTime();
+    if(ms < 0) ms = 0;
+    var mins = Math.floor(ms / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return mins + 'm';
+    var hrs = Math.floor(mins / 60);
+    if(hrs < 24) return hrs + 'h';
+    return Math.floor(hrs / 24) + 'd';
+  }
+
+  // Friendly "Division · Section" labels instead of the raw hash path
+  // (e.g. "apparel/gallery" -> "Apparel · Gallery"). Mirrors the site's own
+  // DIVISIONS/ROUTES/TITLES structure in public/index.html.
+  var DIVISION_LABEL = { apparel: 'Apparel', signs: 'Signs' };
+  var ROUTE_LABEL = { home: '', about: 'About', services: 'Services', gallery: 'Gallery', faq: 'FAQ', contact: 'Get a Quote' };
+  function friendlyPage(raw){
+    var parts = String(raw || '').replace(/^#\/?/, '').split('/').filter(Boolean);
+    var division = 'apparel', route = 'home';
+    if(parts.length && DIVISION_LABEL[parts[0]]){
+      division = parts[0];
+      if(parts[1] && ROUTE_LABEL.hasOwnProperty(parts[1])){ route = parts[1]; }
+    } else if(parts.length && ROUTE_LABEL.hasOwnProperty(parts[0])){
+      route = parts[0];
+    }
+    var routeLabel = ROUTE_LABEL[route];
+    return DIVISION_LABEL[division] + (routeLabel ? ' · ' + routeLabel : '');
+  }
+
+  var liveDivisionFilter = document.getElementById('liveDivisionFilter');
+  var chatSearchInput = document.getElementById('chatSearchInput');
+  var chatSearchDebounce = null;
+
+  // ---------------- Needs Attention (Overview strip + nav badge) ----------------
+  // Pulls from whichever caches are already loaded (orders + chat sessions)
+  // so it stays free -- no extra network call -- and updates whenever
+  // either one refreshes, regardless of which tab is currently open.
+  function updateAttention(){
+    var needsReplyCount = sessionsCache.filter(function(s){ return s.unreadCount > 0; }).length;
+    var real = ordersCache.filter(function(o){ return !o.isExample; });
+    var openOrders = real.filter(function(o){ return TERMINAL_STAGES.indexOf(o.stage) === -1; });
+    var overdueCount = openOrders.filter(orderIsOverdue).length;
+    var rushCount = openOrders.filter(orderIsRush).length;
+    var staleInquiryCount = real.filter(function(o){ return o.stage === 'New Inquiry' && orderIsStale(o); }).length;
+    var staleQuoteCount = real.filter(function(o){ return o.stage === 'Quoted' && orderIsStale(o); }).length;
+
+    var badge = document.getElementById('navBadgeChat');
+    if(badge){
+      badge.textContent = needsReplyCount;
+      badge.hidden = needsReplyCount === 0;
+    }
+    var selOpt = document.getElementById('tabSelectLiveOption');
+    if(selOpt){ selOpt.textContent = needsReplyCount > 0 ? ('FlashChat (' + needsReplyCount + ')') : 'FlashChat'; }
+
+    var strip = document.getElementById('attnStrip');
+    if(!strip) return;
+    var chips = [];
+    if(needsReplyCount > 0){
+      chips.push('<button type="button" class="attn-chip sev-chat" data-go="live"><span class="attn-num">' + needsReplyCount + '</span> chat' + (needsReplyCount === 1 ? '' : 's') + ' need' + (needsReplyCount === 1 ? 's' : '') + ' a reply</button>');
+    }
+    if(overdueCount > 0){
+      chips.push('<button type="button" class="attn-chip sev-overdue" data-go="orders"><span class="attn-num">' + overdueCount + '</span> order' + (overdueCount === 1 ? '' : 's') + ' overdue</button>');
+    }
+    if(rushCount > 0){
+      chips.push('<button type="button" class="attn-chip sev-rush" data-go="orders"><span class="attn-num">' + rushCount + '</span> rush order' + (rushCount === 1 ? '' : 's') + '</button>');
+    }
+    if(staleInquiryCount > 0){
+      chips.push('<button type="button" class="attn-chip sev-stale" data-go="orders"><span class="attn-num">' + staleInquiryCount + '</span> inquir' + (staleInquiryCount === 1 ? 'y' : 'ies') + ' need' + (staleInquiryCount === 1 ? 's' : '') + ' follow-up</button>');
+    }
+    if(staleQuoteCount > 0){
+      chips.push('<button type="button" class="attn-chip sev-stale" data-go="orders"><span class="attn-num">' + staleQuoteCount + '</span> quote' + (staleQuoteCount === 1 ? '' : 's') + ' gone quiet</button>');
+    }
+    if(chips.length === 0){
+      chips.push('<span class="attn-chip is-calm">All caught up — no chats waiting, nothing overdue.</span>');
+    }
+    strip.innerHTML = chips.join('');
+    Array.prototype.forEach.call(strip.querySelectorAll('.attn-chip[data-go]'), function(btn){
+      btn.addEventListener('click', function(){ goToTab(btn.getAttribute('data-go')); });
+    });
+  }
+
+  var onlineToggle = document.getElementById('onlineToggle');
+  var onlineDetail = document.getElementById('onlineDetail');
+  if(onlineToggle){
+    onlineToggle.addEventListener('click', function(){
+      var open = onlineDetail.hasAttribute('hidden') === false;
+      onlineDetail.hidden = open;
+      onlineToggle.classList.toggle('is-open', !open);
+    });
+  }
+  function loadVisitors(){
+    var division = (liveDivisionFilter && liveDivisionFilter.value) || '';
+    var qs = division ? ('?division=' + encodeURIComponent(division)) : '';
+    apiFetch('/live/visitors' + qs).then(function(data){
+      var countEl = document.getElementById('onlineCount');
+      if(!countEl || !onlineToggle || !onlineDetail) return;
+      var visitors = (data && data.visitors) || [];
+      countEl.textContent = visitors.length;
+      onlineToggle.classList.toggle('has-visitors', visitors.length > 0);
+      if(visitors.length === 0){
+        onlineDetail.innerHTML = '<div class="empty-state">Nobody on the site right now.</div>';
+        return;
+      }
+      var list = document.createElement('div');
+      list.className = 'live-list';
+      visitors.forEach(function(v){
+        var row = document.createElement('div');
+        row.className = 'visitor-row';
+        row.innerHTML = '<span class="v-dot"></span>' +
+          '<span class="v-page">' + escapeHtml(friendlyPage(v.page)) + '</span>' +
+          '<span class="v-since">' + escapeHtml(fmtSince(v.firstSeen)) + '</span>';
+        list.appendChild(row);
+      });
+      onlineDetail.innerHTML = '';
+      onlineDetail.appendChild(list);
+    }).catch(function(){});
+  }
+
+  function buildChatRow(s){
+    var row = document.createElement('div');
+    row.className = 'chat-row';
+    var tag = s.unreadCount > 0
+      ? '<span class="chat-tag tag-unread">New</span>'
+      : (s.mode === 'human'
+        ? '<span class="chat-tag tag-human">You’re in</span>'
+        : (s.hadHumanReply ? '<span class="chat-tag">AI (you replied before)</span>' : '<span class="chat-tag tag-none">No action yet</span>'));
+    var extraTags = '';
+    if(s.quoteSubmitted){ extraTags += '<span class="chat-tag tag-quote">Quote sent</span>'; }
+    if(s.resolution === 'unresolved'){ extraTags += '<span class="chat-tag tag-unresolved">Needs follow-up</span>'; }
+    else if(s.resolution === 'resolved'){ extraTags += '<span class="chat-tag tag-resolved">Resolved</span>'; }
+    var avatarIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>';
+    row.innerHTML = '<span class="c-avatar">' + avatarIcon + '</span>' +
+      '<div class="c-main">' +
+      '<div class="c-top">' + tag + extraTags + '<span class="c-page">' + escapeHtml(friendlyPage(s.lastPage)) + ' · ' + escapeHtml(fmtSince(s.lastMessageAt)) + ' ago</span></div>' +
+      '<div class="c-preview">' + escapeHtml(s.lastText || '') + '</div>' +
+      '</div>';
+    row.addEventListener('click', function(){ openChatThread(s.id); });
+    return row;
+  }
+
+  function loadChatSessions(){
+    var days = (chatDaysFilter && chatDaysFilter.value) || '1';
+    var division = (liveDivisionFilter && liveDivisionFilter.value) || '';
+    var q = (chatSearchInput && chatSearchInput.value.trim()) || '';
+    var qs = q ? ('?q=' + encodeURIComponent(q)) : ('?days=' + encodeURIComponent(days));
+    if(division){ qs += '&division=' + encodeURIComponent(division); }
+    apiFetch('/live/sessions' + qs).then(function(data){
+      var area = document.getElementById('chatSessionsArea');
+      var sessions = (data && data.sessions) || [];
+      sessionsCache = sessions;
+      updateAttention();
+      if(!area) return;
+      if(sessions.length === 0){
+        area.innerHTML = '<div class="empty-state">' + (q ? 'No chats match “' + escapeHtml(q) + '”.' : 'No chats in this window.') + '</div>';
+        return;
+      }
+      // Broken into clear sections instead of one flat stack -- the chats
+      // that actually need Gilbert's attention float to the top.
+      var needsReply = sessions.filter(function(s){ return s.unreadCount > 0; });
+      var needsReplyIds = needsReply.map(function(s){ return s.id; });
+      var unresolved = sessions.filter(function(s){ return needsReplyIds.indexOf(s.id) === -1 && s.resolution === 'unresolved'; });
+      var unresolvedIds = unresolved.map(function(s){ return s.id; });
+      var rest = sessions.filter(function(s){ return needsReplyIds.indexOf(s.id) === -1 && unresolvedIds.indexOf(s.id) === -1; });
+      var wrap = document.createElement('div');
+      [
+        { label:'Needs a reply', cls:'sev-reply', items:needsReply },
+        { label:'Unresolved', cls:'sev-unresolved', items:unresolved },
+        { label:'All chats', cls:'', items:rest }
+      ].forEach(function(section){
+        if(section.items.length === 0) return;
+        var head = document.createElement('div');
+        head.className = 'chat-section-header' + (section.cls ? ' ' + section.cls : '');
+        head.innerHTML = '<span>' + escapeHtml(section.label) + '</span><span class="count">' + section.items.length + '</span>';
+        wrap.appendChild(head);
+        var list = document.createElement('div');
+        list.className = 'live-list';
+        section.items.forEach(function(s){ list.appendChild(buildChatRow(s)); });
+        wrap.appendChild(list);
+      });
+      area.innerHTML = '';
+      area.appendChild(wrap);
+    }).catch(function(){});
+  }
+
+  if(chatDaysFilter){
+    chatDaysFilter.addEventListener('change', loadChatSessions);
+  }
+  if(liveDivisionFilter){
+    liveDivisionFilter.addEventListener('change', function(){ loadVisitors(); loadChatSessions(); });
+  }
+  if(chatSearchInput){
+    chatSearchInput.addEventListener('input', function(){
+      if(chatSearchDebounce){ clearTimeout(chatSearchDebounce); }
+      chatSearchDebounce = setTimeout(loadChatSessions, 300);
+    });
+  }
+
+  function chatAvatarInitial(role){
+    if(role === 'agent') return 'Y';
+    if(role === 'ai') return 'AI';
+    return 'V';
+  }
+
+  function fmtClock(iso){
+    if(!iso) return '';
+    try{
+      return new Date(iso).toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+    }catch(e){ return ''; }
+  }
+
+  function refreshChatThread(){
+    if(!chatThreadSessionId) return;
+    apiFetch('/live/sessions/' + encodeURIComponent(chatThreadSessionId) + '/messages').then(function(data){
+      var list = document.getElementById('chatThreadList');
+      var pill = document.getElementById('chatThreadStatusPill');
+      if(!list || !data || !data.messages) return; // modal closed mid-flight
+      if(pill && data.mode){
+        pill.className = 'chat-status-pill' + (data.mode === 'human' ? ' mode-human' : '');
+        pill.innerHTML = '<span class="dot"></span>' + (data.mode === 'human' ? 'You’re in this chat' : 'AI is replying');
+      }
+      if(data.messages.length === chatThreadRenderedCount) return;
+      list.innerHTML = data.messages.map(function(m){
+        var cls = m.role === 'agent' ? 'from-you' : (m.role === 'visitor' ? 'from-visitor' : 'from-ai');
+        var rowCls = m.role === 'agent' ? 'row-you' : 'row-them';
+        var avCls = m.role === 'agent' ? 'av-you' : (m.role === 'visitor' ? 'av-visitor' : 'av-ai');
+        return '<div class="chat-thread-row ' + rowCls + '">' +
+          '<span class="chat-avatar ' + avCls + '">' + chatAvatarInitial(m.role) + '</span>' +
+          '<div class="chat-thread-msg-wrap">' +
+            '<div class="chat-thread-msg ' + cls + '">' + escapeHtml(m.text) + '</div>' +
+            '<span class="chat-thread-time">' + fmtClock(m.createdAt) + '</span>' +
+          '</div></div>';
+      }).join('');
+      list.scrollTop = list.scrollHeight;
+      chatThreadRenderedCount = data.messages.length;
+    }).catch(function(){});
+  }
+
+  function openChatThread(sessionId){
+    chatThreadSessionId = sessionId;
+    chatThreadRenderedCount = -1;
+    modal.innerHTML = '';
+    modal.classList.add('modal-chat');
+
+    var head = document.createElement('div');
+    head.className = 'chat-thread-head';
+    var titleWrap = document.createElement('div');
+    titleWrap.innerHTML = '<div class="chat-thread-head-title">Chat</div>' +
+      '<div class="chat-thread-head-sub"><span class="chat-status-pill" id="chatThreadStatusPill"><span class="dot"></span>Loading…</span></div>';
+    head.appendChild(titleWrap);
+    var headSpacer = document.createElement('div');
+    headSpacer.className = 'chat-thread-head-spacer';
+    head.appendChild(headSpacer);
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn-modal';
+    closeBtn.textContent = 'Close';
+    closeBtn.onclick = closeModal;
+    head.appendChild(closeBtn);
+    modal.appendChild(head);
+
+    var list = document.createElement('div');
+    list.className = 'chat-thread-list';
+    list.id = 'chatThreadList';
+    modal.appendChild(list);
+
+    var quickRepliesRow = document.createElement('div');
+    quickRepliesRow.className = 'chat-quick-replies';
+    modal.appendChild(quickRepliesRow);
+
+    var form = document.createElement('form');
+    form.className = 'chat-thread-form';
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Type a reply…';
+    form.appendChild(input);
+
+    renderQuickReplyChips(quickRepliesRow, input);
+    var sendBtn = document.createElement('button');
+    sendBtn.type = 'submit';
+    sendBtn.className = 'chat-send-btn';
+    sendBtn.setAttribute('aria-label', 'Send');
+    sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+    form.appendChild(sendBtn);
+    modal.appendChild(form);
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var text = (input.value || '').trim();
+      if(!text) return;
+      input.value = '';
+      sendBtn.disabled = true;
+      apiFetch('/live/sessions/' + encodeURIComponent(sessionId) + '/reply', {
+        method: 'POST',
+        body: JSON.stringify({ text: text })
+      }).then(function(){
+        sendBtn.disabled = false;
+        refreshChatThread();
+        loadChatSessions();
+      }).catch(function(){ sendBtn.disabled = false; });
+    });
+
+    var actions = document.createElement('div');
+    actions.className = 'chat-thread-actions';
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn-modal btn-modal-danger';
+    delBtn.textContent = 'Delete Chat';
+    delBtn.onclick = function(){
+      if(!window.confirm('Delete this chat? This can’t be undone.')) return;
+      apiFetch('/live/sessions/' + encodeURIComponent(sessionId), { method:'DELETE' }).then(function(){
+        closeModal();
+        loadChatSessions();
+      });
+    };
+    actions.appendChild(delBtn);
+    var releaseBtn = document.createElement('button');
+    releaseBtn.type = 'button';
+    releaseBtn.className = 'btn-modal';
+    releaseBtn.textContent = 'Hand Back to AI';
+    releaseBtn.onclick = function(){
+      apiFetch('/live/sessions/' + encodeURIComponent(sessionId) + '/release', { method:'POST' }).then(function(){
+        refreshChatThread();
+        loadChatSessions();
+      });
+    };
+    actions.appendChild(releaseBtn);
+    modal.appendChild(actions);
+
+    modalBackdrop.hidden = false;
+    refreshChatThread();
+    chatThreadPollTimer = setInterval(refreshChatThread, 4000);
+  }
+
+  function refreshLive(){
+    loadVisitors();
+    loadChatSessions();
+  }
+
+  // ---------------- boot / auth ----------------
+  var loginScreen = document.getElementById('loginScreen');
+  var loginForm = document.getElementById('loginForm');
+  var loginPassword = document.getElementById('loginPassword');
+  var loginError = document.getElementById('loginError');
+  var logoutBtn = document.getElementById('logoutBtn');
+  var booted = false;
+
+  function setStatus(live){
+    statusPill.classList.toggle('is-live', !!live);
+    statusText.textContent = live ? 'Live' : 'Connecting';
+  }
+  function showLogin(){
+    app.classList.remove('is-shown');
+    loginScreen.classList.add('is-shown');
+  }
+  function showApp(){
+    loginScreen.classList.remove('is-shown');
+    app.classList.add('is-shown');
+  }
+
+  function boot(){
+    showApp();
+    if(booted){ refreshAll(); return; }
+    booted = true;
+    ordersColl().onSnapshot(function(snap){
+      ordersCache = snap.docs.map(function(d){ return Object.assign({ id:d.id }, d.data()); });
+      renderOrders(); renderOverview();
+      setStatus(true);
+    }, function(){ setStatus(false); });
+    vendorsColl().onSnapshot(function(snap){
+      vendorsCache = snap.docs.map(function(d){ return Object.assign({ id:d.id }, d.data()); });
+      renderVendors();
+    }, function(){});
+    infoDocRef().onSnapshot(function(snap){
+      infoCache = snap.exists ? snap.data() : {};
+      renderInfo(infoCache);
+      renderQuickLinks();
+    }, function(){});
+    quickRepliesColl().onSnapshot(function(snap){
+      quickRepliesCache = snap.docs.map(function(d){ return Object.assign({ id:d.id }, d.data()); });
+      renderQuickReplies();
+    }, function(){});
+
+    // No realtime push from a plain REST backend -- poll for new quotes /
+    // changes made from another device. Orders refresh most often since
+    // that's where new quotes show up.
+    setInterval(function(){ ordersColl().refresh().catch(function(){}); }, 20000);
+    setInterval(function(){ vendorsColl().refresh().catch(function(){}); }, 60000);
+    refreshLive();
+    setInterval(refreshLive, 15000);
+    fetchMetrics();
+    setInterval(fetchMetrics, 60000);
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState === 'visible'){ refreshAll(); }
+    });
+  }
+  function refreshAll(){
+    ordersColl().refresh().catch(function(){});
+    vendorsColl().refresh().catch(function(){});
+    infoDocRef().refresh().catch(function(){});
+    quickRepliesColl().refresh().catch(function(){});
+    refreshLive();
+    fetchMetrics();
+  }
+
+  loginForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    loginError.textContent = '';
+    var submitBtn = loginForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    fetch('/api/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: loginPassword.value })
+    }).then(function(r){
+      submitBtn.disabled = false;
+      if(!r.ok){
+        loginError.textContent = 'Wrong password — try again.';
+        return;
+      }
+      loginPassword.value = '';
+      boot();
+    }).catch(function(){
+      submitBtn.disabled = false;
+      loginError.textContent = 'Could not reach the server — check your connection and try again.';
+    });
+  });
+
+  logoutBtn.addEventListener('click', function(){
+    fetch('/api/logout', { method:'POST', credentials:'same-origin' }).then(function(){
+      showLogin();
+    });
+  });
+
+  fetch('/api/session', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(data){
+    if(data && data.loggedIn){ boot(); } else { showLogin(); }
+  }).catch(function(){ showLogin(); });
+
+  // ---------------- click-and-drag to scroll ----------------
+  // For mice without a working scroll wheel (or anyone who just prefers it):
+  // click and drag on empty page space to pan up/down/left/right, same as
+  // touch scrolling. Finds the nearest actually-scrollable ancestor under
+  // the cursor (a board column, the horizontally-scrolling Orders board, an
+  // open modal, or the page itself) and drags that. Skips anything with its
+  // own click/drag behavior (buttons, links, form fields, the draggable
+  // order cards) so it never fights with normal clicking.
+  //
+  // Modals ARE draggable-to-scroll too (every modal field is a <label>
+  // wrapping its own input, so excluding "label" wholesale would have
+  // excluded every field's text and padding, not just its input -- only the
+  // actual form controls are excluded by tag below). When a modal is open,
+  // the search for a scrollable ancestor stops at the modal's edge instead
+  // of falling through to the page behind it, so an accidental drag inside a
+  // modal that has nothing to scroll does nothing rather than silently
+  // scrolling the (invisible, backdrop-covered) page behind it.
+  (function(){
+    var DRAG_THRESHOLD = 4;
+    var drag = null;
+    // Vertical and horizontal panning can legitimately belong to two
+    // different containers at once -- e.g. on the Orders board, the board
+    // itself scrolls horizontally (its columns) but has no vertical
+    // overflow of its own, while the PAGE is what scrolls vertically.
+    // Picking a single "closest scrollable ancestor" for both axes meant a
+    // vertical drag that started over the board silently moved the board's
+    // (non-existent) vertical scroll instead of the page. Resolving each
+    // axis to its own nearest scrollable ancestor fixes that.
+    function findScrollableAxis(el, axis, boundary){
+      var prop = axis === 'y' ? 'overflowY' : 'overflowX';
+      var sizeProp = axis === 'y' ? 'scrollHeight' : 'scrollWidth';
+      var clientProp = axis === 'y' ? 'clientHeight' : 'clientWidth';
+      while(el && el !== document.body && el !== document.documentElement){
+        var cs = window.getComputedStyle(el);
+        var can = (cs[prop] === 'auto' || cs[prop] === 'scroll') && el[sizeProp] > el[clientProp];
+        if(can) return el;
+        if(boundary && el === boundary) return null;
+        el = el.parentElement;
+      }
+      return boundary ? null : (document.scrollingElement || document.documentElement);
+    }
+    document.addEventListener('mousedown', function(e){
+      if(e.button !== 0) return;
+      // NOTE: deliberately not excluding #modalBackdrop here -- it wraps the
+      // whole modal, so closest('#modalBackdrop') would match everything
+      // inside the modal too, not just the backdrop overlay itself. A drag
+      // starting on the bare backdrop is handled explicitly below (it pans
+      // the modal, same as dragging inside it) rather than excluded.
+      if(e.target.closest('button, a, input, textarea, select, [draggable="true"]')) return;
+      var modalOpen = !modalBackdrop.hidden;
+      var boundary = modalOpen ? modal : null;
+      var yEl, xEl;
+      if(modalOpen && !e.target.closest('#modal')){
+        // Drag started on the dimmed backdrop itself, just outside the
+        // modal card -- easy to do by a few pixels, especially since the
+        // modal is centered and its edge isn't obvious. The real page
+        // behind the backdrop is covered and inert anyway, so there's
+        // nothing useful to scroll there; treat this the same as dragging
+        // inside the modal instead of silently doing nothing.
+        yEl = (modal.scrollHeight > modal.clientHeight) ? modal : null;
+        xEl = null;
+      } else {
+        yEl = findScrollableAxis(e.target, 'y', boundary);
+        xEl = findScrollableAxis(e.target, 'x', boundary);
+      }
+      if(!yEl && !xEl) return;
+      drag = { yEl: yEl, xEl: xEl, x: e.clientX, y: e.clientY, left: xEl ? xEl.scrollLeft : 0, top: yEl ? yEl.scrollTop : 0, moved: false };
+    });
+    document.addEventListener('mousemove', function(e){
+      if(!drag) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if(!drag.moved){
+        if(Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+        drag.moved = true;
+        document.body.classList.add('is-panning');
+      }
+      e.preventDefault();
+      if(drag.xEl) drag.xEl.scrollLeft = drag.left - dx;
+      if(drag.yEl) drag.yEl.scrollTop = drag.top - dy;
+    });
+    // A drag that actually panned something still ends in a normal 'click'
+    // event on mouseup (preventDefault on mousemove doesn't cancel it) --
+    // harmless most places, but e.g. dragging from the backdrop to scroll
+    // an open modal (see above) would immediately re-trigger the
+    // backdrop's own click-to-close handler and slam the modal shut right
+    // after scrolling it. Swallow exactly that one synthetic click,
+    // site-wide, whenever a pan just happened.
+    var suppressNextClick = false;
+    function endDrag(){
+      if(drag && drag.moved){ document.body.classList.remove('is-panning'); suppressNextClick = true; }
+      drag = null;
+    }
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('mouseleave', endDrag);
+    document.addEventListener('click', function(e){
+      if(suppressNextClick){ suppressNextClick = false; e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  })();
+})();
+</script>
+
+</body></html>
